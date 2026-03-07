@@ -1,0 +1,747 @@
+/* =========================================================
+   MAIN PAGE - Plant cultivation theme (mobile-first)
+   ========================================================= */
+
+/* Body */
+.main-body {
+  background-color: #f0f4f0;
+  min-height: 100vh;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Top bar */
+.main-topbar {
+  background: linear-gradient(135deg, #2e7d32 0%, #388e3c 60%, #43a047 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.main-topbar-icon {
+  color: #a5d6a7;
+  font-size: 1.3rem;
+}
+
+.main-topbar-title {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.3px;
+}
+
+.main-switch {
+  cursor: pointer;
+}
+
+.main-switch-label {
+  color: #c8e6c9;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* Cards container */
+.main-cards-container {
+  padding-bottom: 2rem;
+}
+
+/* Task card */
+.task-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(46,125,50,0.10), 0 1px 3px rgba(0,0,0,0.07);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  border: 1px solid #e8f5e9;
+}
+
+.task-card:active {
+  transform: scale(0.99);
+}
+
+.task-card-header {
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Default header (fallback if no bg_class) */
+.task-card-header:not([class*="bg-"]) {
+  background: linear-gradient(90deg, #388e3c, #43a047);
+}
+
+.task-badge-num {
+  background-color: rgba(0,0,0,0.25);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+.task-date {
+  color: rgba(255,255,255,0.82);
+  font-size: 0.72rem;
+}
+
+.task-card-body {
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  background: #ffffff;
+}
+
+.task-description {
+  font-size: 0.88rem;
+  color: #37474f;
+  line-height: 1.45;
+}
+
+.task-card-footer {
+  padding: 0.45rem 0.9rem;
+  background: #f9fbe7;
+  border-top: 1px solid #e8f5e9;
+}
+
+.task-status-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+}
+
+.task-comment-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #78909c;
+}
+
+/* Action panel */
+.action-panel-container {
+  width: 220px;
+  z-index: 1050;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.action-panel-header {
+  background: linear-gradient(135deg, #2e7d32, #43a047);
+}
+
+.action-panel-title {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.badge-envio {
+  background-color: #2e7d32;
+  color: #ffffff;
+}
+
+.action-panel-item {
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #37474f;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.action-panel-item:hover {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-option {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #37474f;
+  padding: 4px 2px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.status-option:hover {
+  background-color: #f1f8e9;
+}
+
+.status-dot {
+  width: 12px;
+  min-width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ========================================================= */
+
+.form-select:focus,
+.form-control:focus {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25) !important;
+  outline: 0 !important;
+}
+
+.action-icon {
+  width: auto;
+  height: 35px;
+}
+
+.icon-tab {
+  height: 25px;
+  width: auto;
+}
+
+.icon-card {
+  height: 1.2rem;
+  width: 1.7rem;
+}
+
+.page-title {
+  color: #3d3d3d;
+  font-weight: 600;
+}
+.repeat-card {
+  background-color: #e2e2e270 !important;
+}
+
+.menu-text-option {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.select-text-option {
+  color: blue;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.text-card-info {
+  font-weight: 700;
+  color: gray;
+  font-size: small;
+}
+
+.hidden-object {
+  display: none;
+}
+
+.flag-icon {
+  height: 35px;
+  cursor: pointer;
+}
+
+.header-button {
+  height: 30px;
+  width: 35px;
+}
+
+.header-button-option {
+  height: 35px;
+}
+
+.header-text {
+  font-weight: normal;
+  color: blue;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.logo-body {
+  height: 30rem;
+  width: 30rem;
+}
+
+.footer-location {
+  margin-top: 2rem;
+}
+
+.logo-footer {
+  height: 2rem;
+  width: 2rem;
+}
+
+.btn-acceder {
+  background-color: #4caf7d;
+  color: #ffffff;
+  border-color: #3d9e6b;
+}
+
+.btn-acceder:hover,
+.btn-acceder:focus {
+  background-color: #3d9e6b;
+  color: #ffffff;
+  border-color: #2f8a5a;
+}
+
+.button-menu {
+  background-color: olivedrab;
+}
+
+.button-menu:hover {
+  background-color: dimgray;
+}
+
+.button-menu.selected {
+  background-color: dimgray !important;
+  color: white !important;
+  border-color: #333 !important;
+  box-shadow: none !important;
+}
+
+.button-menu.selected,
+.button-menu.active {
+  background-color: dimgray !important;
+  color: white !important;
+  border-color: #333 !important;
+  box-shadow: none !important;
+}
+
+.button-menu-text {
+  font-size: 0.875rem;
+  color: white;
+}
+
+.button-actual-day {
+  background-color: darkolivegreen;
+  color: white;
+}
+
+.day-text {
+  font-size: 0.875rem;
+  color: gold;
+  margin-right: 0.5rem;
+}
+
+.button-text {
+  font-weight: 500;
+  font-size: 1.3rem;
+  color: white;
+}
+
+/* Altura fija para la tabla en tablet */
+.table-container {
+  max-height: 500px;
+  overflow-y: auto;
+  margin-top: 1rem;
+}
+
+/* Evitar que los inputs se vean muy grandes */
+.form-control.time-input {
+  width: 90px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Ajuste para tablet */
+@media (max-width: 767px) {
+  .table th,
+  .table td {
+    padding: 0.3rem 0.4rem !important;
+    font-size: 0.875rem;
+  }
+  .time-input {
+    width: 80px;
+  }
+
+  .icon-table-mini {
+    width: 1rem;
+  }
+
+  .icon-table-medium {
+    width: 1.4rem;
+  }
+
+  .td-text-table {
+    font-size: 0.75rem !important;
+  }
+
+  .tabla-comentarios {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+}
+
+/* Fondo de fila alternada */
+.table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+/* Tarjetas con capacidad de swipe */
+.swipeable-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease-out, opacity 0.2s ease;
+  cursor: grab;
+}
+
+.swipeable-card:active {
+  cursor: grabbing;
+}
+
+/* Feedback visual durante el deslizamiento */
+.swipeable-card.swiping::after {
+  content: "🗑️";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Opcional: sombra ligera al deslizar */
+.swipeable-card.swiping {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.swipeable-card {
+  touch-action: pan-y;
+}
+
+.header-date {
+  font-size: 0.7rem;
+}
+
+.acciones-contextual {
+  font-size: 0.7rem;
+  width: 150px;
+}
+
+.body-description {
+  font-size: 0.875rem;
+}
+
+.subtareas-text {
+  font-size: 0.7rem;
+  color: grey;
+  margin-right: 3px;
+}
+
+.subtareas-icon-little {
+  height: 1.3rem;
+}
+
+.icon-menu-lateral {
+  width: 1.4rem;
+}
+
+.text-menu-lateral {
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.header {
+  background-color: lightgreen;
+  border-radius: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border: 1px green solid;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: none;
+}
+
+.card-header .card-title {
+  margin: 0;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.card-body {
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-top: none;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.column-title {
+  font-weight: bold;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  text-align: center;
+  color: #495057;
+}
+
+/* --- COLORES POR COLUMNA --- */
+
+/* PENDIENTE - Gris */
+.card.asignado {
+  border: 1px solid #c7ffb9;
+}
+.card.asignado .card-header,
+.card.asignado .card-footer {
+  background-color: #478a4a;
+  color: #ffffff;
+  padding-left: 8px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+.card.asignado .card-body {
+  background-color: #fafafa;
+  padding: 3px !important;
+  margin: 3px !important;
+}
+
+/* FINALIZADO - Verde */
+.card.pendiente {
+  border: 1px solid #eac7c7;
+}
+.card.pendiente .card-header,
+.card.pendiente .card-footer {
+  background-color: #eac7c7;
+  color: #125a15;
+}
+.card.pendiente .card-body {
+  background-color: #ffecec;
+}
+
+/* Opcional: sombra y hover */
+.card {
+  box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.1);
+}
+
+.footer-icon {
+  height: 1.6rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.footer-text {
+  font-size: 1.2rem;
+}
+
+.icon-table {
+  width: 2rem;
+}
+
+.icon-table-mini {
+  width: 1rem;
+}
+
+.icon-table-medium {
+  width: 1.4rem;
+}
+.icon-menu {
+  height: 2.4rem;
+}
+
+/* Menú lateral */
+.lateral-menu {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 200px;
+  height: 100vh;
+  background: white;
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+  z-index: 1050;
+  transition: right 0.3s ease;
+  overflow-y: auto;
+}
+
+.lateral-menu.open {
+  right: 0;
+}
+
+.menu-icon {
+  width: auto;
+  height: 40px;
+}
+
+.menu-icon-right {
+  width: auto;
+  height: 30px;
+}
+
+.menu-icon-right-mini{
+    width: auto;
+  height: 25px;
+}
+
+.menu-item {
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Overlay oscuro */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.lateral-menu-text-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(68 68 68);
+}
+
+.bg-bug {
+  background-color: lightpink;
+}
+
+.bg-medium {
+  background-color: palegoldenrod;
+}
+
+
+.bg-low {
+  background-color: aquamarine;
+}
+
+/* -------------------------------------------------------------------------- */
+/* AJUSTES PARA TABLET Y ESCRITORIO                  */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 769px) {
+  .acciones-contextual {
+    font-size: 1.2rem;
+    width: 150px;
+  }
+
+  /* Escalado de fuentes pequeñas */
+  .menu-text-option {
+    font-size: 0.85rem; /* 0.75rem -> 0.85rem */
+  }
+
+  .select-text-option {
+    font-size: 1.2rem; /* 0.875rem -> 1rem */
+  }
+
+  .text-card-info {
+    font-size: 0.9rem; /* small (~0.85rem) -> 0.875rem */
+  }
+
+  .button-menu-text {
+    font-size: 1rem; /* 0.875rem -> 1rem */
+  }
+
+  .day-text {
+    font-size: 1rem; /* 0.875rem -> 1rem */
+  }
+
+  .form-control.time-input {
+    font-size: 1rem; /* 0.875rem -> 1rem */
+  }
+
+  .header-date {
+    font-size: 0.8rem; /* 0.7rem -> 0.8rem */
+  }
+
+  .acciones-contextual {
+    font-size: 0.8rem; /* 0.7rem -> 0.8rem */
+    width: 180px; /* Aumentar también el ancho del select */
+  }
+
+  .body-description {
+    font-size: 1rem; /* 0.875rem -> 1rem */
+  }
+
+  .subtareas-text {
+    font-size: 0.8rem; /* 0.7rem -> 0.8rem */
+  }
+
+  .subtareas-icon-little {
+    height: 1.4rem;
+  }
+
+  .text-menu-lateral {
+    font-size: 1rem; /* 0.875rem -> 1rem */
+  }
+
+  .lateral-menu-text-time {
+    font-size: 0.85rem; /* 0.75rem -> 0.85rem */
+    font-weight: 600;
+    color: rgb(68 68 68);
+  }
+
+  /* Escalado de textos medianos/grandes */
+  .button-text {
+    font-size: 1.5rem; /* 1.3rem -> 1.5rem */
+  }
+
+  .footer-text {
+    font-size: 1.4rem; /* 1.2rem -> 1.4rem */
+  }
+
+  /* Ajuste de padding/espaciado de tabla si es necesario */
+  .table th,
+  .table td {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 1rem;
+  }
+
+  .form-control.time-input {
+    width: 100px;
+  }
+}
+
+.card-body-scrollable {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.attached-card{
+  height: 3rem;
+}
+
+.estado-indicator{
+  font-size: 1.3rem;
+}
+
+.viewer-pdf{
+  font-size: 0.875rem;
+}
