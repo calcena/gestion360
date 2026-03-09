@@ -27,6 +27,7 @@ $_SESSION['base_path'] = dirname(__FILE__);
   <script src="../services/logs/logs.js?<?php random_file_enumerator() ?>"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <title>Gestión de Pedidos</title>
 </head>
 

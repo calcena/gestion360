@@ -27,6 +27,20 @@ switch ($action) {
         define('ACTION', $action);
         require_once $controllerFile;
         break;
+    case 'savePdf':
+        $controllerFile = ROOT_PATH . '/controllers/save_pdf.php';
+        if (!file_exists($controllerFile)) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'error' => 'Controlador no encontrado: ' . $controllerFile
+            ]);
+            exit;
+        }
+        define('ACTION', $action);
+        require_once $controllerFile;
+        break;
     case 'uploadFile':
         $controllerFile = ROOT_PATH . '/controllers/attach.php';
         if (!file_exists($controllerFile)) {

@@ -17,29 +17,36 @@ if (DB_TYPE !== 'sqlite') {
         . "</p>");
 }
 
-$databaseDir = dirname(DB_PATH);
+// Resolve DB_PATH: if it's relative, make it relative to the project root
+$projectRoot = realpath(__DIR__ . '/..');
+
+// Normalize DB path: place DB inside project's `database/` directory using the basename
+$resolvedDbPath = $projectRoot . '/database/' . basename(DB_PATH);
+$databaseDir = dirname($resolvedDbPath);
 if (!is_dir($databaseDir)) {
+    // Intentar crear el directorio dentro del proyecto
     if (!mkdir($databaseDir, 0755, true)) {
         error_log("DatabaseConnection.php: No se pudo crear la carpeta de base de datos: $databaseDir");
         die("<p style='color:red; font-family:monospace;'>"
             . "No se pudo crear la carpeta de base de datos: <strong>" . htmlspecialchars($databaseDir) . "</strong><br>"
-            . "Asegúrate de que el servidor tenga permisos de escritura."
+            . "Asegúrate de que el servidor tenga permisos de escritura en el proyecto."
             . "</p>");
     }
 }
 
-// Verificar que el archivo exista, si no, intentar crearlo (SQLite lo crea automáticamente al conectar)
-if (!file_exists(DB_PATH)) {
-    error_log("DatabaseConnection.php: El archivo SQLite no existe, se creará al conectar: " . DB_PATH);
+// Verificar que el archivo exista, si no, se creará al conectar (SQLite)
+if (!file_exists($resolvedDbPath)) {
+    error_log("DatabaseConnection.php: El archivo SQLite no existe, se creará al conectar: " . $resolvedDbPath);
 }
 
 function conectar()
 {
     static $connection = null;
     if ($connection === null) {
+        global $resolvedDbPath;
         try {
             $connection = new PDO(
-                'sqlite:' . DB_PATH,
+                'sqlite:' . $resolvedDbPath,
                 null, // username (no aplica para SQLite)
                 null, // password (no aplica para SQLite)
                 [
@@ -52,13 +59,13 @@ function conectar()
             // Opcional: habilitar foreign keys en SQLite
             $connection->exec("PRAGMA foreign_keys = ON;");
 
-            error_log("✅ Conexión SQLite exitosa a: " . DB_PATH);
+            error_log("✅ Conexión SQLite exitosa a: " . $resolvedDbPath);
 
         } catch (PDOException $e) {
             error_log("DatabaseConnection.php - Error de conexión SQLite: " . $e->getMessage());
             die("<p style='color:red; font-family:monospace;'>"
                 . "No se pudo conectar a la base de datos SQLite.<br>"
-                . "Verifica la ruta: <strong>" . htmlspecialchars(DB_PATH) . "</strong><br>"
+                . "Verifica la ruta: <strong>" . htmlspecialchars($resolvedDbPath) . "</strong><br>"
                 . "<small>" . htmlspecialchars($e->getMessage()) . "</small>"
                 . "</p>");
         }

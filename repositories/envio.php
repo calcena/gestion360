@@ -37,6 +37,10 @@ function list_envios($params)
         $where_sql = "WHERE x.activo = true";
     }
 
+    if ($where_sql === null || $where_sql === '') {
+        $where_sql = "WHERE x.activo = true";
+    }
+
     $sql_base = "
         SELECT
             x.id,
@@ -51,12 +55,12 @@ function list_envios($params)
             p.icono AS prioridad_icono,
             (SELECT COUNT(id) FROM comentario WHERE envio_id = x.id AND activo = true) AS count_comentarios,
             p.bg_class,
-            a.archivo as adjunto
+            (SELECT archivo FROM adjunto a2 WHERE a2.envio_id = x.id ORDER BY COALESCE(a2.version_timestamp, (strftime('%%s', a2.registro) * 1000)) DESC, a2.registro DESC LIMIT 1) as adjunto
         FROM
             envio x
         INNER JOIN prioridad p ON x.prioridad_id = p.id
         INNER JOIN estado e ON x.estado_id = e.id
-        LEFT JOIN adjunto a ON x.id = a.envio_id
+        -- left join removed; adjunto pulled via subquery to return latest version
         %s
         ORDER BY e.orden, p.orden, x.registro
     ";
