@@ -1,5 +1,14 @@
 <?php
 
+function guardar_log($envio_id, $usuario_id, $accion, $campo = null, $valor_anterior = null, $valor_nuevo = null) {
+    $db = conectar();
+    $stmt = $db->prepare("
+        INSERT INTO envio_logs (envio_id, usuario_id, accion, campo_modificado, valor_anterior, valor_nuevo, registro)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+    ");
+    $stmt->execute([$envio_id, $usuario_id, $accion, $campo, $valor_anterior, $valor_nuevo]);
+}
+
 function list_envios($params)
 {
     $db = conectar();

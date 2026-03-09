@@ -329,14 +329,34 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
   let isEditMode = false;
   let isDrawing = false;
   let currentTool = 'pen';
-  let drawColor = '#e53935';
+  let drawColor = '#2196f3';
   let lineWidth = 3;
   let lastX = 0, lastY = 0;
+  let highlightStartX = 0, highlightStartY = 0;
+  let highlightPoints = [];
+  let savedCanvasData = null;
   const annotations = {}; // { pageNum: dataURL }
 
   const saveCurrentAnnotation = () => {
     if (overlayCanvas) {
       annotations[pageNum] = overlayCanvas.toDataURL();
+      highlightPoints = [];
+    }
+  };
+
+  const redrawHighlight = () => {
+    overlayCtx.fillStyle = drawColor + '40';
+    const thickness = lineWidth * 3;
+    for (let i = 0; i < highlightPoints.length - 1; i += 2) {
+      const x1 = highlightPoints[i];
+      const y1 = highlightPoints[i + 1];
+      const x2 = highlightPoints[i + 2];
+      const y2 = highlightPoints[i + 3];
+      const minX = Math.min(x1, x2) - thickness;
+      const minY = Math.min(y1, y2) - thickness;
+      const w = Math.abs(x2 - x1) + thickness * 2;
+      const h = Math.abs(y2 - y1) + thickness * 2;
+      overlayCtx.fillRect(minX, minY, w, h);
     }
   };
 
@@ -383,25 +403,39 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           saveCurrentAnnotation();
         }
       }
+      if (currentTool === 'highlight') {
+        highlightPoints = [lastX, lastY];
+        savedCanvasData = overlayCtx.getImageData(0, 0, overlayCanvas.width, overlayCanvas.height);
+      }
     });
 
     overlayCanvas.addEventListener('mousemove', (e) => {
       if (!isDrawing || !isEditMode) return;
       const [x, y] = getPos(e);
-      overlayCtx.beginPath();
       if (currentTool === 'eraser') {
         overlayCtx.globalCompositeOperation = 'destination-out';
         overlayCtx.lineWidth = lineWidth * 5;
+        overlayCtx.beginPath();
+        overlayCtx.lineCap = 'round';
+        overlayCtx.lineJoin = 'round';
+        overlayCtx.moveTo(lastX, lastY);
+        overlayCtx.lineTo(x, y);
+        overlayCtx.stroke();
+      } else if (currentTool === 'highlight') {
+        highlightPoints.push(x, y);
+        overlayCtx.putImageData(savedCanvasData, 0, 0);
+        redrawHighlight();
       } else {
         overlayCtx.globalCompositeOperation = 'source-over';
+        overlayCtx.beginPath();
         overlayCtx.strokeStyle = drawColor;
         overlayCtx.lineWidth = lineWidth;
+        overlayCtx.lineCap = 'round';
+        overlayCtx.lineJoin = 'round';
+        overlayCtx.moveTo(lastX, lastY);
+        overlayCtx.lineTo(x, y);
+        overlayCtx.stroke();
       }
-      overlayCtx.lineCap = 'round';
-      overlayCtx.lineJoin = 'round';
-      overlayCtx.moveTo(lastX, lastY);
-      overlayCtx.lineTo(x, y);
-      overlayCtx.stroke();
       [lastX, lastY] = [x, y];
     });
 
@@ -430,15 +464,6 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       for (const [pageIndex, dataUrl] of Object.entries(annotations)) {
         const idx = parseInt(pageIndex) - 1;
         if (!pages[idx]) continue;
-        // DEBUG: log sizes to verify mapping between overlay canvas and PDF page
-        try {
-          console.log('DEBUG embed: pageIndex=', pageIndex, 'overlayCanvas size=', overlayCanvas.width, overlayCanvas.height);
-          const pdfPageForDebug = pages[idx];
-          const pdfSizeForDebug = pdfPageForDebug.getSize();
-          console.log('DEBUG embed: pdf page size=', pdfSizeForDebug.width, pdfSizeForDebug.height);
-        } catch (e) {
-          console.warn('DEBUG embed: failed to log sizes', e);
-        }
         const imgData = dataUrl.split(',')[1];
         const imgBytes = Uint8Array.from(atob(imgData), c => c.charCodeAt(0));
         const pngImage = await pdfLibDoc.embedPng(imgBytes);
@@ -464,26 +489,22 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         console.warn('No envio_id available in sessionStorage', e);
       }
 
-        // Attach annotations metadata for server-side debugging
-        try {
-          const annotationsMeta = {};
-          for (const [p, dataUrl] of Object.entries(annotations)) {
-            annotationsMeta[p] = {
-              length: dataUrl ? dataUrl.length : 0,
-              preview: dataUrl ? dataUrl.slice(0, 200) : null
-            };
-          }
-          formData.append('annotations_meta', JSON.stringify(annotationsMeta));
-          console.log('annotationsMeta', annotationsMeta);
-        } catch (e) {
-          console.warn('Failed to add annotations meta', e);
+      try {
+        const annotationsMeta = {};
+        for (const [p, dataUrl] of Object.entries(annotations)) {
+          annotationsMeta[p] = {
+            length: dataUrl ? dataUrl.length : 0,
+            preview: dataUrl ? dataUrl.slice(0, 200) : null
+          };
         }
+        formData.append('annotations_meta', JSON.stringify(annotationsMeta));
+      } catch (e) {
+        console.warn('Failed to add annotations meta', e);
+      }
 
-      // Let the browser/axios set the Content-Type (including boundary) automatically
       const response = await axios.post('../controllers/save_pdf.php', formData);
 
       if (response.data.success) {
-        // Update state and DOM safely (elements may be inside the Swal modal and removed)
         isEditMode = false;
         const btnEdit = document.getElementById('btn_edit_mode');
         if (btnEdit && btnEdit.classList) {
@@ -498,7 +519,6 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           overlayCanvas.style.pointerEvents = 'none';
         }
 
-        // Verify server-side file matches what we just uploaded (size check)
         try {
           const serverPdf = await fetch(`../attachments/${pdfUrl}`);
           const serverBuf = await serverPdf.arrayBuffer();
@@ -510,14 +530,21 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         } catch (verifyErr) {
           console.error('Verification error:', verifyErr);
         }
-            // Refresh envios list so the attached icon/link is updated
-            try { if (typeof getListAllEnvios === 'function') getListAllEnvios(); } catch(e){ console.warn('refresh list failed', e); }
+
+        try { 
+          if (typeof getListAllEnvios === 'function') getListAllEnvios(); 
+        } catch(e) { 
+          console.warn('refresh list failed', e); 
+        }
+        
+        Swal.close();
+        window.location.href = "./main.php";
       } else {
         Swal.fire('Error', response.data.message, 'error');
       }
     } catch (err) {
-      console.error(err);
-      Swal.fire('Error', 'No se pudo guardar el PDF', 'error');
+      console.error('Error saving PDF:', err);
+      Swal.fire('Error', 'No se pudo guardar el PDF: ' + (err.message || 'Error desconocido'), 'error');
     }
   };
 
@@ -537,10 +564,11 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         <button id="btn_versions" class="btn btn-sm btn-secondary"><i class="fas fa-history"></i> Versiones</button>
       </div>
       <div id="edit-toolbar" class="mb-2 d-flex flex-wrap justify-content-center align-items-center gap-2" style="display:none!important;">
-        <button id="tool_pen"     class="btn btn-sm btn-dark active-tool"><i class="fas fa-pencil-alt"></i></button>
-        <button id="tool_text"    class="btn btn-sm btn-outline-dark"><i class="fas fa-font"></i></button>
-        <button id="tool_eraser"  class="btn btn-sm btn-outline-secondary"><i class="fas fa-eraser"></i></button>
-        <input type="color" id="draw_color" value="#e53935" title="Color" style="width:36px;height:32px;padding:2px;border-radius:4px;cursor:pointer;">
+        <button id="tool_pen"       class="btn btn-sm btn-dark active-tool"><i class="fas fa-pencil-alt"></i></button>
+        <button id="tool_highlight" class="btn btn-sm btn-outline-dark"><i class="fas fa-highlighter"></i></button>
+        <button id="tool_text"      class="btn btn-sm btn-outline-dark"><i class="fas fa-font"></i></button>
+        <button id="tool_eraser"    class="btn btn-sm btn-outline-secondary"><i class="fas fa-eraser"></i></button>
+        <input type="color" id="draw_color" value="#2196f3" title="Color" style="width:36px;height:32px;padding:2px;border-radius:4px;cursor:pointer;">
         <select id="line_width" class="form-select form-select-sm" style="width:80px">
           <option value="2">Fino</option>
           <option value="4" selected>Normal</option>
@@ -724,13 +752,14 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         // Tool buttons
         const setActiveTool = (tool) => {
           currentTool = tool;
-          ['tool_pen','tool_text','tool_eraser'].forEach(id => {
+          ['tool_pen','tool_highlight','tool_text','tool_eraser'].forEach(id => {
             document.getElementById(id).classList.toggle('btn-dark', id === `tool_${tool}`);
             document.getElementById(id).classList.toggle(`btn-outline-${id === 'tool_eraser' ? 'secondary' : 'dark'}`, id !== `tool_${tool}`);
           });
           overlayCanvas.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
         };
         document.getElementById("tool_pen").addEventListener("click", () => setActiveTool('pen'));
+        document.getElementById("tool_highlight").addEventListener("click", () => setActiveTool('highlight'));
         document.getElementById("tool_text").addEventListener("click", () => setActiveTool('text'));
         document.getElementById("tool_eraser").addEventListener("click", () => setActiveTool('eraser'));
 

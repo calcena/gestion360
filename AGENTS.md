@@ -77,3 +77,16 @@ gestion_pedidos/
 - `index.php` - Login page
 - `views/main.php` - Main dashboard (after auth)
 - `controllers/*.php` - API endpoints
+
+## PDF Viewer Editor
+Located in `services/main/main.js`:
+- **Tools**: Pen (bolígrafo), Highlight (resaltador), Text (texto), Eraser (borrador)
+- **Highlight**: Rectangle highlight with ~25% opacity (suffix '40'), draws areas while dragging
+- **Pen**: Default color blue (#2196f3)
+- **Storage**: Annotations stored per-page in memory as dataURLs
+
+## PDF.js Viewer (assets/pdfjs/web/)
+The standard PDF.js viewer includes built-in annotation tools:
+- **Highlight tool**: Available in editor toolbar
+- **Default colors**: Blue (#2196f3) added as first option
+- **Enable**: Configured via `annotationEditorMode` option set to 4 (HIGHLIGHT)

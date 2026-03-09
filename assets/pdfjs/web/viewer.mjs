@@ -15398,6 +15398,26 @@ function getViewerConfiguration() {
 }
 function webViewerLoad() {
   const config = getViewerConfiguration();
+  
+  // Enable annotation editor mode and set default highlight color to blue
+  if (window.pdfjsLib) {
+    window.pdfjsLib.AnnotationEditorType = {
+      NONE: 0,
+      FREETEXT: 1,
+      INK: 2,
+      STAMP: 3,
+      HIGHLIGHT: 4,
+      DISABLE: -1
+    };
+  }
+  
+  // Set default annotation editor mode to HIGHLIGHT (4) and default color to blue
+  const AppOptions = window.PDFViewerApplicationOptions;
+  if (AppOptions) {
+    AppOptions.set("annotationEditorMode", 4); // HIGHLIGHT
+    AppOptions.set("highlightEditorColors", "yellow=#ffff00,blue=#2196f3,green=#53FFBC,pink=#FFCBE6,red=#FF4F5F");
+  }
+  
   const event = new CustomEvent("webviewerloaded", {
     bubbles: true,
     cancelable: true,
