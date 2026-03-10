@@ -388,6 +388,31 @@ function handle_eliminar_envio()
     }
 }
 
+function handle_get_audit_logs()
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+        return;
+    }
+    $input = json_decode(file_get_contents('php://input'), true);
+    $params = $input['data'];
+
+    try {
+        $entity = get_audit_logs($params);
+        echo json_encode([
+            'success' => true,
+            'content' => $entity
+        ]);
+    } catch (Exception $e) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
 
 
 
@@ -437,6 +462,9 @@ switch ($action) {
         break;
     case 'enviosRecibidos':
         handle_update_envio_recibido();
+        break;
+    case 'getAuditLogs':
+        handle_get_audit_logs();
         break;
     default:
         http_response_code(400);

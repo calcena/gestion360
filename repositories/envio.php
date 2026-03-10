@@ -1,12 +1,18 @@
 <?php
 
 function guardar_log($envio_id, $usuario_id, $accion, $campo = null, $valor_anterior = null, $valor_nuevo = null) {
-    $db = conectar();
-    $stmt = $db->prepare("
-        INSERT INTO envio_logs (envio_id, usuario_id, accion, campo_modificado, valor_anterior, valor_nuevo, registro)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
-    ");
-    $stmt->execute([$envio_id, $usuario_id, $accion, $campo, $valor_anterior, $valor_nuevo]);
+    try {
+        $db = conectar();
+        // Use the new envio_audit table instead of envio_logs
+        $stmt = $db->prepare("
+            INSERT INTO envio_audit (envio_id, usuario_id, accion, campo, valor_anterior, valor_nuevo, registro)
+            VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+        ");
+        $stmt->execute([$envio_id, $usuario_id, $accion, $campo, $valor_anterior, $valor_nuevo]);
+    } catch (Exception $e) {
+        // Log error but don't fail the operation
+        error_log("Error guardando log de auditoría: " . $e->getMessage());
+    }
 }
 
 function list_envios($params)
@@ -107,19 +113,34 @@ function create_new_tarea($params)
                                 ");
     $stmt->execute([$params["registro"], $params["num_envio"],1 , $params["descripcion"], $params["prioridad_id"], $params["estado_id"]]);
 
-    if ($db->lastInsertId() > 0) {
+    $envio_id = $db->lastInsertId();
+    
+    if ($envio_id > 0) {
         $stmt_contador = $db->prepare("
                                 update contador set envio=?
                                 where id = 1");
         $stmt_contador->execute([$params["envio"]]);
+        
+        // Log the creation
+        $usuario_id = (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) ? $_SESSION['user']['id'] : null;
+        guardar_log($envio_id, $usuario_id, 'CREATE', 'envio', null, json_encode([
+            'num_envio' => $params["num_envio"],
+            'descripcion' => $params["descripcion"],
+            'prioridad_id' => $params["prioridad_id"],
+            'estado_id' => $params["estado_id"]
+        ]));
+        
+        // Only insert attachment if a file was provided
+        if (!empty($params["archivo"])) {
+            $stmt_attach = $db->prepare("
+                                    insert into adjunto (registro, envio_id, archivo)
+                                    values (?,?,?)
+                                    ");
+            $stmt_attach->execute([$params["registro"], $envio_id, $params["archivo"]]);
+        }
     }
-
-    $stmt_attach = $db->prepare("
-                                insert into adjunto (registro, envio_id, archivo)
-                                values (?,?,?)
-                                ");
-    $stmt_attach->execute([$params["registro"],$db->lastInsertId(), $params["archivo"]]);
-    return $db->lastInsertId();
+    
+    return $envio_id;
 }
 
 
@@ -146,12 +167,113 @@ function edit_envio($params)
 {
     global $db;
     $db = conectar();
-    $stmt = $db->prepare("
-                                update envio set estado_id=?
-                                where id = ?
-                                ");
-    $stmt->execute([$params["estado"], $params["envio"]]);
+    
+    // Get current values for logging
+    $stmt_select = $db->prepare("SELECT * FROM envio WHERE id = ?");
+    $stmt_select->execute([$params["envio"]]);
+    $current = $stmt_select->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$current) {
+        return false;
+    }
+    
+    // Build update query based on provided parameters
+    $update_fields = [];
+    $update_params = [];
+    
+    // Handle both 'estado' and 'estado_id' parameters
+    $estado = isset($params["estado_id"]) ? $params["estado_id"] : (isset($params["estado"]) ? $params["estado"] : null);
+    if ($estado !== null) {
+        $update_fields[] = "estado_id = ?";
+        $update_params[] = $estado;
+    }
+    
+    // Handle both 'prioridad' and 'prioridad_id' parameters
+    $prioridad = isset($params["prioridad_id"]) ? $params["prioridad_id"] : (isset($params["prioridad"]) ? $params["prioridad"] : null);
+    if ($prioridad !== null) {
+        $update_fields[] = "prioridad_id = ?";
+        $update_params[] = $prioridad;
+    }
+    
+    if (isset($params["descripcion"])) {
+        $update_fields[] = "descripcion = ?";
+        $update_params[] = $params["descripcion"];
+    }
+    
+    if (isset($params["num_envio"])) {
+        $update_fields[] = "num_envio = ?";
+        $update_params[] = $params["num_envio"];
+    }
+    
+    if (empty($update_fields)) {
+        return true; // Nothing to update
+    }
+    
+    $update_params[] = $params["envio"]; // Add envio_id for WHERE clause
+    
+    $sql = "UPDATE envio SET " . implode(", ", $update_fields) . " WHERE id = ?";
+    $stmt = $db->prepare($sql);
+    $stmt->execute($update_params);
+    
+    // Log each field change
+    $usuario_id = (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) ? $_SESSION['user']['id'] : null;
+    
+    if ($estado !== null && $current['estado_id'] != $estado) {
+        guardar_log($params["envio"], $usuario_id, 'CHANGE_STATE', 'estado_id', $current['estado_id'], $estado);
+    }
+    
+    if ($prioridad !== null && $current['prioridad_id'] != $prioridad) {
+        guardar_log($params["envio"], $usuario_id, 'CHANGE_PRIORITY', 'prioridad_id', $current['prioridad_id'], $prioridad);
+    }
+    
+    if (isset($params["descripcion"]) && $current['descripcion'] != $params["descripcion"]) {
+        guardar_log($params["envio"], $usuario_id, 'UPDATE', 'descripcion', $current['descripcion'], $params["descripcion"]);
+    }
+    
+    if (isset($params["num_envio"]) && $current['num_envio'] != $params["num_envio"]) {
+        guardar_log($params["envio"], $usuario_id, 'UPDATE', 'num_envio', $current['num_envio'], $params["num_envio"]);
+    }
+    
     return true;
+}
+
+function get_envio_audit_logs($envio_id)
+{
+    $db = conectar();
+    $stmt = $db->prepare("
+        SELECT 
+            ea.id,
+            ea.registro,
+            ea.usuario_id,
+            u.nombre as usuario_nombre,
+            ea.envio_id,
+            ea.accion,
+            ea.campo,
+            ea.valor_anterior,
+            ea.valor_nuevo
+        FROM envio_audit ea
+        LEFT JOIN usuario u ON ea.usuario_id = u.id
+        WHERE ea.envio_id = ? AND ea.activo = true
+        ORDER BY ea.registro DESC
+    ");
+    $stmt->execute([$envio_id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Placeholder functions for tiempo tracking (if needed in the future)
+function register_time_init($params) {
+    // Placeholder - tiempo table doesn't exist yet
+    return true;
+}
+
+function register_time_fin($params) {
+    // Placeholder - tiempo table doesn't exist yet
+    return true;
+}
+
+function tiempo_tarea($params) {
+    // Placeholder - tiempo table doesn't exist yet
+    return [];
 }
 
 function exists_envios($params)
@@ -218,12 +340,34 @@ function delete_comentario($params)
 
 function elimina_envio($params)
 {
+    // Validate envio_id
+    if (!isset($params["envio"]) || empty($params["envio"])) {
+        throw new Exception("ID de envío no proporcionado");
+    }
+    
+    $envio_id = intval($params["envio"]);
+    if ($envio_id <= 0) {
+        throw new Exception("ID de envío inválido");
+    }
+    
     $db = conectar();
-    $stmt = $db->prepare("
-                                    delete from  envio
-                                    where id = ?
-                                ");
-    $stmt->execute([$params["envio"]]);
+    
+    // Get current values for logging before deletion
+    $stmt_select = $db->prepare("SELECT id, num_envio, activo FROM envio WHERE id = ?");
+    $stmt_select->execute([$envio_id]);
+    $current = $stmt_select->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$current) {
+        throw new Exception("Envío no encontrado");
+    }
+    
+    $stmt = $db->prepare("DELETE FROM envio WHERE id = ?");
+    $stmt->execute([$envio_id]);
+    
+        // Log the deletion
+        $usuario_id = (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) ? $_SESSION['user']['id'] : null;
+        guardar_log($envio_id, $usuario_id, 'DELETE', 'envio', json_encode($current), null);
+    
     return true;
 }
 
@@ -269,6 +413,13 @@ function envio_recibido_ok($params)
     try {
         $stmt = $db->prepare($sql);
         $stmt->execute($ids);
+        
+        // Log the change for each envio
+        $usuario_id = (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) ? $_SESSION['user']['id'] : null;
+        foreach ($ids as $envio_id) {
+            guardar_log($envio_id, $usuario_id, 'UPDATE', 'recibido', 0, 1);
+        }
+        
         return $stmt->rowCount() > 0;
     } catch (PDOException $e) {
         error_log("Error en envio_recibido_ok: " . $e->getMessage());

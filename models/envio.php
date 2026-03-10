@@ -74,6 +74,12 @@ function update_envio_recibido($params){
     return $entity;
 }
 
+function get_audit_logs($params){
+    global $db;
+    $entity = get_envio_audit_logs($params["envio_id"]);
+    return $entity;
+}
+
 
 
 

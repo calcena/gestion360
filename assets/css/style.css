@@ -139,6 +139,25 @@
   object-fit: contain;
   flex-shrink: 0;
   display: inline-block;
+  transition: transform 0.2s ease;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Tablets (768px y más) */
+@media (min-width: 768px) {
+  .task-card-body .attached-card {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Desktop (1024px y más) */
+@media (min-width: 1024px) {
+  .task-card-body .attached-card {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .task-status-badge {

@@ -23,13 +23,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$fileName = isset($_POST['file_name']) ? basename($_POST['file_name']) : '';
+$fileName = isset($_POST['file_name']) ? $_POST['file_name'] : '';
 $versionTimestamp = isset($_POST['version_timestamp']) ? $_POST['version_timestamp'] : null;
 
-if (empty($fileName) || !preg_match('/^[a-f0-9\-]+(\.\d+)?\.pdf$/i', $fileName)) {
-    echo json_encode(['success' => false, 'message' => 'Nombre de archivo inválido']);
+// Log file name for debugging
+file_put_contents($logFile, "Processing file_name: " . $fileName . "\n", FILE_APPEND);
+
+// Validate file name - ensure it ends with .pdf and doesn't contain path traversal
+if (empty($fileName)) {
+    file_put_contents($logFile, "ERROR: File name is empty\n", FILE_APPEND);
+    echo json_encode(['success' => false, 'message' => 'Nombre de archivo vacío']);
     exit;
 }
+
+if (!preg_match('/\.pdf$/i', $fileName)) {
+    file_put_contents($logFile, "ERROR: File name does not end with .pdf: " . $fileName . "\n", FILE_APPEND);
+    echo json_encode(['success' => false, 'message' => 'El archivo debe terminar en .pdf']);
+    exit;
+}
+
+if (preg_match('/[\/\\\\]/', $fileName)) {
+    file_put_contents($logFile, "ERROR: File name contains path separators: " . $fileName . "\n", FILE_APPEND);
+    echo json_encode(['success' => false, 'message' => 'Nombre de archivo inválido (path traversal detected)']);
+    exit;
+}
+
+// Sanitize file name to prevent path traversal
+$fileName = basename($fileName);
 
 $uploadDir = $root . '/attachments/';
 if (!is_dir($uploadDir)) {

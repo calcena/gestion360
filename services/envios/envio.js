@@ -32,7 +32,7 @@ const initEnvios = async () => {
     };
     try {
       const response = await axios.post(
-        "../../api/tareas/tarea.php?getEnvioById",
+        "../../api/envios/envio.php?getTareaById",
         { data },
         {
           headers: {
@@ -76,18 +76,23 @@ const saveAction = async () => {
   const data = {
     registro: obtenerFechaHoyConHora(),
     num_envio: document.getElementById("num_envio").innerText,
-    envio: sessionStorage.getItem("num_envio"),
     descripcion: document.getElementById("envio_descripcion").value,
     prioridad_id: document.getElementById("select_prioridad_accion").value,
     estado_id: 1,
-    archivo: sessionStorage.getItem("file_name"),
   };
+  
   if (modo === "nuevo") {
-    data.tarea = sessionStorage.getItem("num_envio");
+    data.envio = parseInt(sessionStorage.getItem("num_envio"));
+    data.tarea = parseInt(sessionStorage.getItem("num_envio"));
     data.estado_id = 1;
+    // Solo enviar archivo si se ha subido uno
+    const fileName = sessionStorage.getItem("file_name");
+    if (fileName) {
+      data.archivo = fileName;
+    }
     urlBase = "../../api/envios/envio.php?createEnvio";
   } else {
-    data.tarea_id = sessionStorage.getItem("tarea_id");
+    data.envio = parseInt(sessionStorage.getItem("envio_id"));
     urlBase = "../../api/envios/envio.php?editEnvio";
   }
 

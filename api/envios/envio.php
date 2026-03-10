@@ -24,6 +24,7 @@ switch ($action) {
     case 'saveComentario':
     case 'getComentarioById':
     case 'deleteComentarioById':
+    case 'getAuditLogs':
         $controllerFile = ROOT_PATH . '/controllers/envio.php';
         if (!file_exists($controllerFile)) {
             http_response_code(500);
