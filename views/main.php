@@ -18,10 +18,10 @@ $_SESSION['base_path'] = dirname(__FILE__);
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="../assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="../assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
-  <link rel="manifest" href="../manifest.json">
-  <link rel="apple-touch-icon" href="../assets/images/icons/pwa-192.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/assets/images/icons/pwa-192.png">
   <meta name="theme-color" content="#0d6efd">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Gestion360">
   <script src="../assets/js/axios/axios.min.js?<?php random_file_enumerator() ?>"></script>
