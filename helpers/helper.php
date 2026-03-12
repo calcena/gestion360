@@ -56,14 +56,14 @@ function show_envoironment_message()
     if (APP_ENV == "local") {
         echo '<div class="container">';
         echo '<div class="bg-primary">';
-        echo '<h2 style="text-align: center;color: white;">Entorno LOCAL</h2>';
+        echo '<h2 class="env-banner">Entorno LOCAL</h2>';
         echo '</div>';
         echo '</div>';
     }
     if (APP_ENV == "qa" || APP_ENV == "dev") {
         echo '<div class="container">';
         echo '<div class="bg-danger">';
-        echo '<h2 style="text-align: center;color: white;">Entorno de DESARROLLO/QA</h2>';
+        echo '<h2 class="env-banner">Entorno de DESARROLLO/QA</h2>';
         echo '</div>';
         echo '</div>';
     }

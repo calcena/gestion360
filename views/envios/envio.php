@@ -50,10 +50,10 @@ $modo = $_GET['modo'];
         <hr>
         <div class="row">
             <div class="col d-flex justify-content-around">
-                <img id="img_delete" style="height: 2rem" src="../../assets/images/icons/papelera.png" alt=""
+                <img id="img_delete" class="img-delete" src="../../assets/images/icons/papelera.png" alt=""
                     onclick="deleteAttachFile()">
-                <input type="file" id="file_input" style="display: none;" accept="application/pdf">
-                <img id="img_attach" style="height: 2.3rem;" src="../../assets/images/icons/upload.png" alt=""
+                <input type="file" id="file_input" class="file-input-hidden" accept="application/pdf">
+                <img id="img_attach" class="img-attach" src="../../assets/images/icons/upload.png" alt=""
                     onclick="attachFile()">
             </div>
         </div>

@@ -64,7 +64,7 @@ $_SESSION['base_path'] = dirname(__FILE__);
         <input class="form-check-input main-switch" type="checkbox" id="checkFinalizado" onchange="checkFinalizado()">
         <label class="form-check-label main-switch-label" for="checkFinalizado">Finalizados</label>
       </div>
-      <img class="icon-menu" src="../assets/images/icons/menu.png" style="cursor:pointer;filter:brightness(0) invert(1);" onclick="showLateralMenu()">
+      <img class="icon-menu icon-menu-inline" src="../assets/images/icons/menu.png" onclick="showLateralMenu()">
     </div>
   </div>
 
@@ -104,13 +104,13 @@ $_SESSION['base_path'] = dirname(__FILE__);
       <hr class="my-1">
       <div id="estados" class="">
         <div class="status-option" onclick="changeStatus('pendiente')">
-          <span class="status-dot" style="background-color:#ef5350;"></span> Pendiente
+          <span class="status-dot status-dot-pendiente"></span> Pendiente
         </div>
         <div class="status-option mt-3" onclick="changeStatus('en_curso')">
-          <span class="status-dot" style="background-color:#ffa726;"></span> En curso
+          <span class="status-dot status-dot-en_curso"></span> En curso
         </div>
         <div class="status-option mt-3" onclick="changeStatus('finalizado')">
-          <span class="status-dot" style="background-color:#66bb6a;"></span> Finalizado
+          <span class="status-dot status-dot-finalizado"></span> Finalizado
         </div>
       </div>
     </div>

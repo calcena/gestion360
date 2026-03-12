@@ -85,7 +85,7 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
   </div>
 
   <!-- Comentarios container -->
-  <div class="container-fluid py-3" style="max-width: 800px; margin: 0 auto;">
+  <div class="container-fluid py-3 comments-container">
     <!-- Input para nuevo comentario -->
     <div class="comment-input-area">
       <div class="mb-2">
