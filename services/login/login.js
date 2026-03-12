@@ -1,5 +1,11 @@
 const initLogin = () => {
-  sessionStorage.clear();
+    sessionStorage.clear();
+    // Event listener for login button
+    document.getElementById('btn_acceder').addEventListener('click', () => {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('pass').value;
+        auth(username, password);
+    });
 };
 
 const auth = async (nombre, pass) => {

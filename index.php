@@ -29,25 +29,12 @@ $_SESSION['base_project'] = dirname(__FILE__);
     <script src="assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/logs/logs.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/translate/translate.js?<?php random_file_enumerator() ?>"></script>
+    <script src="services/login/pwa.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/login/login.js?<?php random_file_enumerator() ?>"></script>
-    <script>
-        // Register service worker for PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker registration failed: ', error);
-                    });
-            });
-        }
-    </script>
     <title><?php echo APP_NAME . '_' . APP_VERSION ?></title>
 </head>
 
-<body onload="initLogin()">
+<body>
     <div class="container">
         <div class="login-container">
             <div id="output"></div>
@@ -55,8 +42,7 @@ $_SESSION['base_project'] = dirname(__FILE__);
             <div class="form-box">
                 <input id="username" name="user" type="text" placeholder="Usuario">
                 <input id="pass" name="pass" type="password" placeholder="Contraseña">
-                <button id="btn_acceder" class="btn login-button btn-block login btn-acceder"
-                    onclick="auth(document.getElementById('username').value, document.getElementById('pass').value)">
+                <button id="btn_acceder" class="btn login-button btn-block login btn-acceder">
                     Acceder
                 </button>
             </div>

@@ -49,3 +49,29 @@ const searchParam = async (newValue) => {
   sessionStorage.setItem("buscador", newValue);
   await getListAllTareas();
 };
+
+// Event listeners assigned on DOMContentLoaded (replaces inline handlers)
+document.addEventListener("DOMContentLoaded", () => {
+  // Search input keyup listener (replaces onkeyup)
+  const searchInput = document.getElementById("buscador");
+  if (searchInput) {
+    searchInput.addEventListener("keyup", (e) => {
+      searchParam(e.target.value);
+    });
+  }
+
+  // Menu items click delegation (replaces onclick)
+  document.querySelectorAll(".menu-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const action = item.getAttribute("data-action");
+      const deep = parseInt(item.getAttribute("data-nav-deep"));
+      menuAction(action, deep);
+    });
+  });
+
+  // Overlay click listener (replaces onclick)
+  const overlay = document.getElementById("menu-overlay");
+  if (overlay) {
+    overlay.addEventListener("click", hideLateralMenu);
+  }
+});

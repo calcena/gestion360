@@ -32,12 +32,14 @@ $modo = $_GET['modo'];
     <title><?php echo APP_NAME . '_' . APP_VERSION ?></title>
 </head>
 
-<body onload="initEnvios()" data-mode="<?php echo htmlspecialchars($modo, ENT_QUOTES, 'UTF-8'); ?>">
+<body>
     <div class="container">
         <div class="row mt-2">
-            <div class="col-12 d-flex justify-content-center">
-                <h3 id="num_envio" class="text-primary"></h3>
+            <div class="col-12 d-flex justify-content-around">
+                <img class="icon-table" src="../../assets/images/icons/cancelar.png" alt="">
+                <img class="icon-table " src="../../assets/images/icons/save.png" alt="">
             </div>
+        </div>
         </div>
         <div class="row">
             <div class="row">
@@ -50,19 +52,16 @@ $modo = $_GET['modo'];
         <hr>
         <div class="row">
             <div class="col d-flex justify-content-around">
-                <img id="img_delete" class="img-delete" src="../../assets/images/icons/papelera.png" alt=""
-                    onclick="deleteAttachFile()">
+                <img id="img_delete" class="img-delete" src="../../assets/images/icons/papelera.png" alt="">
                 <input type="file" id="file_input" class="file-input-hidden" accept="application/pdf">
-                <img id="img_attach" class="img-attach" src="../../assets/images/icons/upload.png" alt=""
-                    onclick="attachFile()">
+                <img id="img_attach" class="img-attach" src="../../assets/images/icons/upload.png" alt="">
             </div>
         </div>
         <hr>
         <div class="row">
             <div class="col-3 w-50">
                 <label for="" class="form-label">Prioridad</label>
-                <select class="form-select acciones-contextual" name="" id="select_prioridad_accion"
-                    onchange="changePriority(this.value)">
+                <select class="form-select acciones-contextual" name="" id="select_prioridad_accion">
                     <option value="1">Normal</option>
                     <option value="2">Alta</option>
                     <option value="3">Urgente</option>
@@ -72,8 +71,7 @@ $modo = $_GET['modo'];
                 <?php
                 if ($modo == "edit") {
                     echo '<label for="" class="form-label">Estado</label>
-                <select class="form-select acciones-contextual" name="" id="select_status_accion"
-                    onchange="changeState(this.value)">
+                <select class="form-select acciones-contextual" name="" id="select_status_accion">
                     <option value="1">Pendiente</option>
                     <option value="2">En curso</option>
                     <option value="3">Finalizado</option>

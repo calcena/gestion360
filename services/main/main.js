@@ -234,6 +234,44 @@ function initMain() {
   closePanelBtn = document.getElementById("close-panel");
   if (closePanelBtn) closePanelBtn.onclick = closeActionPanel;
 
+  // Event listener for checkFinalizado checkbox (replaces onchange)
+  const checkFinalizadoCheckbox = document.getElementById("checkFinalizado");
+  if (checkFinalizadoCheckbox) {
+    checkFinalizadoCheckbox.addEventListener("change", checkFinalizado);
+  }
+
+  // Event listener for menu icon (replaces onclick)
+  const menuIcon = document.querySelector(".icon-menu");
+  if (menuIcon) {
+    menuIcon.addEventListener("click", showLateralMenu);
+  }
+
+  // Event delegation for action panel items (replaces onclick handlers)
+  document.querySelectorAll(".action-panel-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const action = item.getAttribute("data-action");
+      switch(action) {
+        case "editar":
+          editarTarea();
+          break;
+        case "eliminar":
+          eliminarEnvio();
+          break;
+        case "comentarios":
+          gotoComentarioEnvio();
+          break;
+      }
+    });
+  });
+
+  // Event delegation for status options (replaces onclick handlers)
+  document.querySelectorAll(".status-option").forEach(option => {
+    option.addEventListener("click", () => {
+      const status = option.getAttribute("data-status");
+      changeStatus(status);
+    });
+  });
+
   if (
     parseInt(sessionStorage.getItem("role_id")) != 1 &&
     parseInt(sessionStorage.getItem("role_id")) != 2

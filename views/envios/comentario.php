@@ -25,13 +25,13 @@ $_SESSION['base_path'] = dirname(__FILE__);
     <script src="../../assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>
     <script src="../../services/helpers/helper.js?<?php random_file_enumerator() ?>"></script>
     <script src="../../services/components/sitebar.js?<?php random_file_enumerator() ?>"></script>
-    <script src="../../services/tareas/comentario.js?<?php random_file_enumerator() ?>"></script>
+    <script src="../../services/comentarios/comentario.js?<?php random_file_enumerator() ?>"></script>
     <script src="../../services/translate/translate.js?<?php random_file_enumerator() ?>"></script>
     <script src="../../services/logs/logs.js?<?php random_file_enumerator() ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body onload="initComentarios()">
+<body>
     <div class="container">
         <div class="row tabla-comentarios">
             <div class="col-12">
@@ -62,12 +62,10 @@ $_SESSION['base_path'] = dirname(__FILE__);
             </div>
         </div>
         <hr>
-        <div class="row mt-2">
+         <div class="row mt-2">
             <div class="col-12 d-flex justify-content-around">
-                <img class="icon-table" src="../../assets/images/icons/cancelar.png" alt=""
-                    onclick="cancelComentarioAction()">
-                <img class="icon-table" src="../../assets/images/icons/save.png" alt=""
-                    onclick="saveComentarioAction()">
+                <img class="icon-table" src="../../assets/images/icons/cancelar.png" alt="">
+                <img class="icon-table " src="../../assets/images/icons/save.png" alt="">
             </div>
         </div>
     </div>
