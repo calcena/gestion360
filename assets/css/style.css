@@ -6,13 +6,13 @@
 .main-body {
   background-color: #f0f4f0;
   min-height: 100vh;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: "Segoe UI", system-ui, sans-serif;
 }
 
 /* Top bar */
 .main-topbar {
   background: linear-gradient(135deg, #2e7d32 0%, #388e3c 60%, #43a047 100%);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -49,9 +49,13 @@
 .task-card {
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(46,125,50,0.10), 0 1px 3px rgba(0,0,0,0.07);
+  box-shadow:
+    0 2px 8px rgba(46, 125, 50, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.07);
   overflow: hidden;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   border: 1px solid #e8f5e9;
 }
 
@@ -66,10 +70,9 @@
   justify-content: space-between;
   align-items: center;
   min-height: 2.2rem;
-  background-color: #DCFCDF; /* Soft light green */
-  border-bottom: 1px solid #3C883E;
+  background-color: #dcfcdf; /* Soft light green */
+  border-bottom: 1px solid #3c883e;
 }
-
 
 /* New / unread task highlight */
 .task-header-new {
@@ -77,12 +80,12 @@
 }
 
 .task-header-new .task-date {
-  color: #3F3F3F;
+  color: #3f3f3f;
 }
 
 /* Danger (urgent) header text adaptation */
 .task-card-header.bg-danger .task-date {
-  color: #3F3F3F;
+  color: #3f3f3f;
 }
 
 .task-badge-num {
@@ -97,7 +100,7 @@
 }
 
 .task-date {
-  color: #3F3F3F;
+  color: #3f3f3f;
   font-size: 0.795rem;
   white-space: nowrap;
 }
@@ -127,6 +130,49 @@
   gap: 6px;
   flex-wrap: nowrap;
   min-height: 2rem;
+}
+
+.comment-card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 3px solid #2e7d32;
+}
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: #666;
+}
+.comment-text {
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+.comment-author {
+  font-weight: 600;
+  color: #2e7d32;
+}
+.comment-time {
+  color: #999;
+  font-size: 0.8rem;
+}
+.comment-input-area {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+.no-comments {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  font-style: italic;
 }
 
 /* Icons inside cards — prevent deformation */
@@ -274,7 +320,7 @@
     font-size: 0.95rem;
   }
   .task-card:hover {
-    box-shadow: 0 4px 16px rgba(46,125,50,0.18);
+    box-shadow: 0 4px 16px rgba(46, 125, 50, 0.18);
     transform: translateY(-2px);
   }
 }
@@ -542,7 +588,9 @@
 .swipeable-card {
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s ease-out, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.2s ease;
   cursor: grab;
 }
 
@@ -687,7 +735,9 @@
 /* Opcional: sombra y hover */
 .card {
   box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   border-radius: 8px;
 }
 
@@ -749,8 +799,8 @@
   height: 30px;
 }
 
-.menu-icon-right-mini{
-    width: auto;
+.menu-icon-right-mini {
+  width: auto;
   height: 25px;
 }
 
@@ -776,7 +826,9 @@
   z-index: 1040;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s, visibility 0.3s;
+  transition:
+    opacity 0.3s,
+    visibility 0.3s;
 }
 
 .menu-overlay.active {
@@ -797,7 +849,6 @@
 .bg-medium {
   background-color: palegoldenrod;
 }
-
 
 .bg-low {
   background-color: aquamarine;
@@ -895,15 +946,15 @@
   overflow-y: auto;
 }
 
-.attached-card{
+.attached-card {
   height: 3rem;
 }
 
-.estado-indicator{
+.estado-indicator {
   font-size: 1.3rem;
 }
 
-.viewer-pdf{
+.viewer-pdf {
   font-size: 0.875rem;
 }
 
@@ -940,11 +991,12 @@
 }
 
 /* 3. Estilo para las barras de herramientas */
-#pdf-toolbar, #edit-toolbar {
+#pdf-toolbar,
+#edit-toolbar {
   background: #ffffff;
   padding: 8px 12px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   border: 1px solid #e0e0e0;
   flex-shrink: 0; /* No permite que se encojan */
   display: flex;
@@ -960,7 +1012,8 @@
 }
 
 /* 4. FIX ICONOS: Evita que se deformen o crezcan */
-#pdf-toolbar i, #edit-toolbar i {
+#pdf-toolbar i,
+#edit-toolbar i {
   font-size: 1rem !important;
   line-height: 1 !important;
   width: auto !important;
@@ -999,7 +1052,7 @@
 
 /* 6. Estilo del documento renderizado */
 #pdf-canvas {
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   background-color: white;
   margin-top: 20px;
   margin-bottom: 20px;
@@ -1060,7 +1113,7 @@
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
 }
 
 .maximize-modal .swal2-close:hover {
@@ -1073,7 +1126,8 @@
   .maximize-html-container {
     padding: 5px !important;
   }
-  #pdf-toolbar i, #edit-toolbar i {
+  #pdf-toolbar i,
+  #edit-toolbar i {
     font-size: 0.9rem !important;
   }
 }
@@ -1165,7 +1219,7 @@
 
 /* Body */
 body {
-  background: #eee ;
+  background: #eee;
   position: relative;
   height: 100%;
 }
