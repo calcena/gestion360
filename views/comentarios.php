@@ -85,8 +85,8 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
     </div>
   </div>
 
-   <!-- Comentarios container -->
-   <div class="container-fluid py-3 comments-container" id="comments-app" data-envio-id="<?php echo $envio_id; ?>" data-num-envio="<?php echo htmlspecialchars($num_envio, ENT_QUOTES); ?>">
+    <!-- Comentarios container -->
+    <div class="container-fluid py-3 comments-container" id="comments-app" data-envio-id="<?php echo $envio_id; ?>" data-num-envio="<?php echo htmlspecialchars($num_envio, ENT_QUOTES); ?>" data-user-id="<?php echo $_SESSION['user']['id']; ?>">
     <!-- Input para nuevo comentario -->
     <div class="comment-input-area">
       <div class="mb-2">

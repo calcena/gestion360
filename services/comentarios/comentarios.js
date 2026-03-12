@@ -62,7 +62,8 @@ async function loadComments() {
 
 function renderComments(comments) {
     const container = document.getElementById('comments-list');
-    const userId = <?php echo $_SESSION['user']['id']; ?>;
+    const app = document.getElementById('comments-app');
+    const userId = parseInt(app.dataset.userId);
 
     if (!comments || comments.length === 0) {
         container.innerHTML = '<div class="no-comments">No hay comentarios aún. Sé el primero en comentar.</div>';
