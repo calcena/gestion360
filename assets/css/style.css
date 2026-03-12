@@ -66,9 +66,10 @@
   justify-content: space-between;
   align-items: center;
   min-height: 2.2rem;
-  background-color: #f2f4f3;
-  border-bottom: 1px solid #dde4de;
+  background-color: #DCFCDF; /* Soft light green */
+  border-bottom: 1px solid #3C883E;
 }
+
 
 /* New / unread task highlight */
 .task-header-new {
@@ -76,12 +77,12 @@
 }
 
 .task-header-new .task-date {
-  color: rgba(255,255,255,0.9);
+  color: #3F3F3F;
 }
 
 /* Danger (urgent) header text adaptation */
 .task-card-header.bg-danger .task-date {
-  color: rgba(255,255,255,0.9);
+  color: #3F3F3F;
 }
 
 .task-badge-num {
@@ -96,8 +97,8 @@
 }
 
 .task-date {
-  color: #78909c;
-  font-size: 0.7rem;
+  color: #3F3F3F;
+  font-size: 0.795rem;
   white-space: nowrap;
 }
 
@@ -105,6 +106,10 @@
   padding: 0.65rem 0.85rem;
   cursor: pointer;
   background: #ffffff;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .task-description {
@@ -127,15 +132,62 @@
 /* Icons inside cards — prevent deformation */
 .task-card-footer .task-icon,
 .task-card-footer img {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   flex-shrink: 0;
 }
 
+/* Mobile-specific image adjustments */
+@media (max-width: 767px) {
+  .task-card-footer .task-icon,
+  .task-card-footer img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .task-card-body .attached-card {
+    width: 45px;
+    height: 45px;
+  }
+
+  .main-topbar-icon {
+    font-size: 1.5rem;
+  }
+
+  .action-icon {
+    height: 40px;
+  }
+
+  .status-dot {
+    width: 14px;
+    min-width: 14px;
+    height: 14px;
+  }
+
+  .icon-card {
+    height: 1.4rem;
+    width: 2rem;
+  }
+
+  .flag-icon {
+    height: 40px;
+  }
+
+  .header-button {
+    height: 35px;
+    width: 40px;
+  }
+
+  .header-button-option {
+    height: 40px;
+    width: 45px;
+  }
+}
+
 .task-card-body .attached-card {
-  width: 22px;
-  height: 22px;
+  width: 45px;
+  height: 45px;
   object-fit: contain;
   flex-shrink: 0;
   display: inline-block;
@@ -147,16 +199,16 @@
 /* Tablets (768px y más) */
 @media (min-width: 768px) {
   .task-card-body .attached-card {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
   }
 }
 
 /* Desktop (1024px y más) */
 @media (min-width: 1024px) {
   .task-card-body .attached-card {
-    width: 44px;
-    height: 44px;
+    width: 50px;
+    height: 50px;
   }
 }
 
@@ -853,4 +905,256 @@
 
 .viewer-pdf{
   font-size: 0.875rem;
+}
+
+/* =========================================================
+   NUEVA SECCIÓN: VISOR PDF MAXIMIZADO (Ajuste de Alto)
+   ========================================================= */
+
+/* 1. Forzar el modal de SweetAlert a pantalla completa real */
+.maximize-modal {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  flex-direction: column !important; /* Permite que los hijos usen flex-grow */
+  background-color: #f8f9fa !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 9999 !important;
+}
+
+/* 2. El contenedor de HTML de Swal debe ser flexible */
+.maximize-html-container {
+  margin: 0 !important;
+  padding: 10px !important;
+  flex-grow: 1 !important; /* Clave: ocupa todo el alto disponible */
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important; /* Evita scroll doble */
+}
+
+/* 3. Estilo para las barras de herramientas */
+#pdf-toolbar, #edit-toolbar {
+  background: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid #e0e0e0;
+  flex-shrink: 0; /* No permite que se encojan */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+#edit-toolbar {
+  border-left: 5px solid #2e7d32;
+  margin-top: 5px;
+}
+
+/* 4. FIX ICONOS: Evita que se deformen o crezcan */
+#pdf-toolbar i, #edit-toolbar i {
+  font-size: 1rem !important;
+  line-height: 1 !important;
+  width: auto !important;
+}
+
+/* 5. EL CONTENEDOR DEL PDF (Ocupa el máximo alto restante) */
+#pdf-container {
+  flex-grow: 1; /* Ocupa el 100% del espacio vertical sobrante */
+  width: 100%;
+  height: 100%;
+  margin-top: 10px;
+  overflow: auto; /* Permite scroll interno para el PDF */
+  background-color: #525659 !important; /* Gris oscuro tipo visor real */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+  /* Allow scrolling to the left edge when zoomed in */
+  scroll-behavior: smooth;
+}
+
+/* Wrapper for PDF canvas to allow proper scrolling when zoomed */
+#pdf-container > div {
+  position: relative !important;
+  /* Remove any width restrictions to allow scrolling */
+  min-width: 100%;
+  display: flex;
+  justify-content: center;
+  /* Ensure wrapper doesn't clip the canvas when zoomed */
+  width: fit-content;
+  margin: 0 auto;
+}
+
+/* 6. Estilo del documento renderizado */
+#pdf-canvas {
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  background-color: white;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  /* Remove max-width restriction */
+  max-width: none !important;
+}
+
+/* Fix for scrolling issue when zoomed in */
+#pdf-container::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+#pdf-container::-webkit-scrollbar-track {
+  background: #444;
+  border-radius: 6px;
+}
+
+#pdf-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+  border: 2px solid #444;
+}
+
+#pdf-container::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+#overlay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* Se activa en modo edición vía JS */
+}
+
+/* Botón de herramienta seleccionada */
+.active-tool {
+  background-color: #2e7d32 !important;
+  color: white !important;
+  border-color: #1b5e20 !important;
+}
+
+/* Botón de cerrar (aspa) del visor PDF - posicionado a la derecha */
+.maximize-modal .swal2-close {
+  position: fixed !important;
+  top: 15px !important;
+  right: 15px !important;
+  font-size: 2rem !important;
+  color: #333 !important;
+  z-index: 10001 !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 50% !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+}
+
+.maximize-modal .swal2-close:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 1) !important;
+}
+
+/* Ajustes responsivos para el visor */
+@media (max-width: 768px) {
+  .maximize-html-container {
+    padding: 5px !important;
+  }
+  #pdf-toolbar i, #edit-toolbar i {
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Modal de versiones - responsive para móvil */
+.versiones-modal {
+  max-width: 95vw !important;
+  width: 95% !important;
+}
+
+.versiones-modal .swal2-html-container {
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+  font-size: 0.85rem !important;
+}
+
+.versiones-modal .list-group-item {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.8rem !important;
+  text-align: left !important;
+}
+
+.versiones-modal .list-group-item > div:first-child {
+  text-align: left !important;
+  flex: 1 !important;
+}
+
+.versiones-modal .list-group-item > div:last-child {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 0.5rem !important;
+}
+
+.versiones-modal .btn-sm {
+  font-size: 0.7rem !important;
+  padding: 0.2rem 0.4rem !important;
+}
+
+/* Mobile adjustments for version modal */
+@media (max-width: 767px) {
+  .versiones-modal .list-group-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  
+  .versiones-modal .list-group-item > div:first-child {
+    text-align: left !important;
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .versiones-modal .list-group-item > div:last-child {
+    width: 100% !important;
+    justify-content: flex-end !important;
+  }
+  
+  .versiones-modal .btn-sm {
+    font-size: 0.9rem !important;
+    padding: 0.5rem 1rem !important;
+    min-width: 90px !important;
+  }
+}
+
+/* Ajustes para dispositivos muy pequeños */
+@media (max-width: 480px) {
+  .versiones-modal {
+    width: 98% !important;
+    margin: 10px !important;
+  }
+
+  .versiones-modal .swal2-html-container {
+    font-size: 0.75rem !important;
+  }
+
+  .versiones-modal .list-group-item {
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .versiones-modal .btn-sm {
+    font-size: 0.65rem !important;
+    padding: 0.15rem 0.3rem !important;
+  }
 }

@@ -20,11 +20,31 @@ $_SESSION['base_project'] = dirname(__FILE__);
     <link href="assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/login/login.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
     <link href="assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/images/icons/pwa-192.png">
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Gestion360">
     <script src="assets/js/axios/axios.min.js?<?php random_file_enumerator() ?>"></script>
     <script src="assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/logs/logs.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/translate/translate.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/login/login.js?<?php random_file_enumerator() ?>"></script>
+    <script>
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
     <title><?php echo APP_NAME . '_' . APP_VERSION ?></title>
 </head>
 

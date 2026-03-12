@@ -80,7 +80,7 @@ const saveAction = async () => {
     prioridad_id: document.getElementById("select_prioridad_accion").value,
     estado_id: 1,
   };
-  
+
   if (modo === "nuevo") {
     data.envio = parseInt(sessionStorage.getItem("num_envio"));
     data.tarea = parseInt(sessionStorage.getItem("num_envio"));
@@ -107,6 +107,7 @@ const saveAction = async () => {
       }
     );
     if (response.data.success) {
+      sessionStorage.removeItem("file_name")
       await crearBackup();
       window.location.href = "../main.php";
     }

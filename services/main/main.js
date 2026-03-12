@@ -82,7 +82,7 @@ const comprobarNuevosEnvios = async () => {
   try {
     const response = await axios.post(
       "../api/envios/envio.php?existsNuevosEnvios",
-      { data }
+      { data },
     );
 
     if (response.data.content && response.data.content.counter_envio > 0) {
@@ -134,7 +134,7 @@ const getListAllEnvios = async () => {
   try {
     const response = await axios.post(
       "../api/envios/envio.php?getListAllEnvios",
-      { data }
+      { data },
     );
 
     if (response.data.success) {
@@ -156,9 +156,9 @@ const parseTableHtml = async (data) => {
     return '<p class="text-center text-muted">No se encontraron tareas.</p>';
 
   const getPriorityOrder = (bg_class) => {
-    if (bg_class === 'bg-bug') return 1; // Urgente
-    if (bg_class === 'bg-low') return 2; // Normal
-    if (bg_class === 'bg-medium') return 3; // Baja
+    if (bg_class === "bg-bug") return 1; // Urgente
+    if (bg_class === "bg-low") return 2; // Normal
+    if (bg_class === "bg-medium") return 3; // Baja
     return 4;
   };
 
@@ -172,34 +172,37 @@ const parseTableHtml = async (data) => {
   return sorted
     .map((item) => {
       const tareaDescripcion = item.envio_descripcion || "Sin descripción";
-      const headerClass = item.recibido == 0
-        ? "task-header-new"
-        : (item.bg_class === "bg-danger" ? "bg-danger" : "");
+      const headerClass =
+        item.recibido == 0
+          ? "task-header-new"
+          : item.bg_class === "bg-danger"
+            ? "bg-danger"
+            : "";
 
-      const cardId = item.id || '';
-      const numEnvio = item.num_envio || '';
-      const envioRegistro = item.envio_registro || '';
-      const prioridadIcono = item.prioridad_icono || 'low_level.png';
-      const estadoNombre = item.estado_nombre || '';
-      const estadoColorBg = item.estado_color_bg || '';
-      const estadoColorText = item.estado_color_text || '';
-      const adjunto = item.adjunto || '';
+      const cardId = item.id || "";
+      const numEnvio = item.num_envio || "";
+      const envioRegistro = item.envio_registro || "";
+      const prioridadIcono = item.prioridad_icono || "low_level.png";
+      const estadoNombre = item.estado_nombre || "";
+      const estadoColorBg = item.estado_color_bg || "";
+      const estadoColorText = item.estado_color_text || "";
+      const adjunto = item.adjunto || "";
 
-      return `
-       <div class="task-card mb-3" id="${cardId}">
-            <div class="task-card-header ${headerClass} card-header-action"
+       return `
+       <div class="task-card mb-3 d-flex flex-column" id="${cardId}">
+            <div class="task-card-header ${headerClass} card-header-action flex-shrink-0"
                  data-card-id="${cardId}" data-card-title="${numEnvio}" data-card-status="${estadoNombre}" data-card-bg-status="${estadoColorBg}">
                 <span class="task-badge-num">${numEnvio}</span>
-                <small class="task-date">${envioRegistro}</small>
+                <span class="task-date">${envioRegistro}</span>
             </div>
-            <div class="task-card-body card-body-detail">
+            <div class="task-card-body card-body-detail flex-grow-1">
                 <p class="task-description mb-0">${tareaDescripcion}</p>
-                ${adjunto ? `<div class="text-end mt-1"><img class="attached-card" src="../assets/images/icons/pdf_envio.png" alt="PDF" style="cursor:pointer;" onclick="viewAttachFile(event, '${adjunto}', '${cardId}')" /></div>` : ''}
+                ${adjunto ? `<div class="text-end mt-1"><img class="attached-card" src="../assets/images/icons/pdf_envio.png" alt="PDF" style="cursor:pointer;" onclick="viewAttachFile(event, '${adjunto}', '${cardId}')" /></div>` : ""}
             </div>
-            <div class="task-card-footer">
+            <div class="task-card-footer flex-shrink-0">
                 <img class="task-icon" src="../assets/images/icons/${prioridadIcono}" alt="prioridad">
                 <span class="task-status-badge ${estadoColorBg} ${estadoColorText}">${estadoNombre}</span>
-                <div class="d-flex align-items-center ms-auto gap-1">
+                <div class="d-flex align-items-center ms-auto gap-1" style="cursor: pointer;" onclick="openComments('${cardId}', '${numEnvio}')">
                     <img class="task-icon" src="../assets/images/icons/comment.png" alt="comentarios" style="opacity:.7;">
                     <span class="task-comment-count">${item.count_comentarios || 0}</span>
                 </div>
@@ -217,7 +220,7 @@ const validarEnviosRecibidos = async () => {
   try {
     const response = await axios.post(
       "../api/envios/envio.php?enviosRecibidos",
-      { data }
+      { data },
     );
 
     if (response.data.success) {
@@ -270,6 +273,7 @@ const handleHeaderClick = (event) => {
   const cardBgStatus = header.getAttribute("data-card-bg-status");
   console.log(cardBgStatus);
   sessionStorage.setItem("envio_id", currentCardId);
+  sessionStorage.setItem("num_envio", cardTitle);
   showActionPanel(currentCardId, cardTitle, cardStatus, cardBgStatus);
 };
 
@@ -313,24 +317,16 @@ function closeActionPanel() {
 
 const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
   event.stopPropagation();
-  habilitarContextoAudio();
-
-  if (envioIdFromCard) {
-    sessionStorage.setItem('envio_id', envioIdFromCard);
-  }
+  if (envioIdFromCard) sessionStorage.setItem("envio_id", envioIdFromCard);
 
   const pdfjsLib = window["pdfjs-dist/build/pdf"];
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-  let pdfDoc = null, pageNum = 1, scale = 0.7;
-  let canvas = null, ctx = null;
-  let overlayCanvas = null, overlayCtx = null;
-  let isEditMode = false;
-  let isDrawing = false;
-  let currentTool = 'pen';
-  let drawColor = '#2196f3';
-  let lineWidth = 3;
+  // Variables de estado
+  let pdfDoc = null, pageNum = 1, scale = 1.0;
+  let canvas, ctx, overlayCanvas, overlayCtx;
+  let isEditMode = false, isDrawing = false, currentTool = "pen";
+  let drawColor = "#2196f3", lineWidth = 3;
   let lastX = 0, lastY = 0;
   let highlightStartX = 0, highlightStartY = 0;
   let highlightPoints = [];
@@ -360,19 +356,28 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
     }
   };
 
+  // Función de renderizado ajustada
   const renderPage = async (num) => {
     const page = await pdfDoc.getPage(num);
+
+    // Auto-ajuste de escala en el primer render
+    if (pageNum === 1 && scale === 1.0) {
+        const containerWidth = document.getElementById('pdf-container').clientWidth;
+        const unscaledViewport = page.getViewport({ scale: 1 });
+        scale = (containerWidth - 40) / unscaledViewport.width;
+    }
+
     const viewport = page.getViewport({ scale });
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-    if (overlayCanvas) {
-      overlayCanvas.height = viewport.height;
-      overlayCanvas.width = viewport.width;
-      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-    }
+    overlayCanvas.height = viewport.height;
+    overlayCanvas.width = viewport.width;
+
     await page.render({ canvasContext: ctx, viewport }).promise;
     document.getElementById("page_num").textContent = num;
-    if (annotations[num] && overlayCtx) {
+
+    // Redibujar anotaciones de esta página
+    if (annotations[num]) {
       const img = new Image();
       img.onload = () => overlayCtx.drawImage(img, 0, 0);
       img.src = annotations[num];
@@ -531,12 +536,12 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           console.error('Verification error:', verifyErr);
         }
 
-        try { 
-          if (typeof getListAllEnvios === 'function') getListAllEnvios(); 
-        } catch(e) { 
-          console.warn('refresh list failed', e); 
+        try {
+          if (typeof getListAllEnvios === 'function') getListAllEnvios();
+        } catch(e) {
+          console.warn('refresh list failed', e);
         }
-        
+
         Swal.close();
         window.location.href = "./main.php";
       } else {
@@ -550,24 +555,29 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
 
   Swal.fire({
     html: `
-      <div id="pdf-toolbar" class="mb-2 d-flex flex-wrap justify-content-center align-items-center gap-2">
-        <button id="prev" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left"></i></button>
-        <span><span id="page_num"></span> / <span id="page_count"></span></span>
-        <button id="next" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-right"></i></button>
-        <div class="vr mx-1"></div>
-        <button id="zoom_out" class="btn btn-sm btn-outline-dark"><i class="fas fa-search-minus"></i></button>
-        <button id="zoom_in" class="btn btn-sm btn-outline-dark"><i class="fas fa-search-plus"></i></button>
-        <button id="zoom_reset" class="btn btn-sm btn-outline-danger">100%</button>
-        <div class="vr mx-1"></div>
-        <button id="btn_edit_mode" class="btn btn-sm btn-outline-warning"><i class="fas fa-pen"></i> Editar</button>
-        <button id="btn_save_pdf" class="btn btn-sm btn-success" style="display:none"><i class="fas fa-save"></i> Guardar PDF</button>
-        <button id="btn_versions" class="btn btn-sm btn-secondary"><i class="fas fa-history"></i> Versiones</button>
+      <div id="pdf-toolbar" class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+        <div class="btn-group">
+            <button id="prev" class="btn btn-sm btn-outline-secondary"><i class="fas fa-chevron-left"></i></button>
+            <button id="next" class="btn btn-sm btn-outline-secondary"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <span class="badge bg-dark px-3 py-2"><span id="page_num">1</span> / <span id="page_count">-</span></span>
+        <div class="vr"></div>
+        <div class="btn-group">
+            <button id="zoom_out" class="btn btn-sm btn-light"><i class="fas fa-minus"></i></button>
+            <button id="zoom_reset" class="btn btn-sm btn-light">100%</button>
+            <button id="zoom_in" class="btn btn-sm btn-light"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="vr"></div>
+        <button id="btn_edit_mode" class="btn btn-sm btn-success"><i class="fas fa-edit"></i> Editar</button>
+        <button id="btn_save_pdf" class="btn btn-sm btn-primary" style="display:none"><i class="fas fa-save"></i> Guardar</button>
+        <button id="btn_versions" class="btn btn-sm btn-outline-info"><i class="fas fa-history"></i></button>
       </div>
-      <div id="edit-toolbar" class="mb-2 d-flex flex-wrap justify-content-center align-items-center gap-2" style="display:none!important;">
-        <button id="tool_pen"       class="btn btn-sm btn-dark active-tool"><i class="fas fa-pencil-alt"></i></button>
+
+      <div id="edit-toolbar" class="mt-2 d-flex flex-wrap justify-content-center align-items-center gap-2" style="display:none !important;">
+        <button id="tool_pen" class="btn btn-sm btn-dark active-tool"><i class="fas fa-pencil-alt"></i></button>
         <button id="tool_highlight" class="btn btn-sm btn-outline-dark"><i class="fas fa-highlighter"></i></button>
-        <button id="tool_text"      class="btn btn-sm btn-outline-dark"><i class="fas fa-font"></i></button>
-        <button id="tool_eraser"    class="btn btn-sm btn-outline-secondary"><i class="fas fa-eraser"></i></button>
+        <button id="tool_text" class="btn btn-sm btn-outline-dark"><i class="fas fa-font"></i></button>
+        <button id="tool_eraser" class="btn btn-sm btn-outline-danger"><i class="fas fa-eraser"></i></button>
         <input type="color" id="draw_color" value="#2196f3" title="Color" style="width:36px;height:32px;padding:2px;border-radius:4px;cursor:pointer;">
         <select id="line_width" class="form-select form-select-sm" style="width:80px">
           <option value="2">Fino</option>
@@ -576,16 +586,21 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         </select>
         <button id="btn_clear_page" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i> Limpiar</button>
       </div>
-      <div id="pdf-container" style="overflow:auto;max-height:65vh;border:1px solid #ccc;background:#eee;position:relative;">
-        <div style="position:relative;display:inline-block;">
+
+      <div id="pdf-container">
+        <div style="position:relative;">
           <canvas id="pdf-canvas"></canvas>
-          <canvas id="overlay-canvas" style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
+          <canvas id="overlay-canvas" style="position:absolute; top:0; left:0; pointer-events:none;"></canvas>
         </div>
       </div>
     `,
-    width: "90%",
+    grow: 'fullscreen',
     showCloseButton: true,
     showConfirmButton: false,
+    customClass: {
+      popup: "maximize-modal",
+      htmlContainer: "maximize-html-container",
+    },
     didOpen: async () => {
       canvas = document.getElementById("pdf-canvas");
       ctx = canvas.getContext("2d");
@@ -596,26 +611,18 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         pdfDoc = await pdfjsLib.getDocument(`../attachments/${pdfUrl}`).promise;
         document.getElementById("page_count").textContent = pdfDoc.numPages;
         await renderPage(pageNum);
-        setupDrawingEvents();
 
-        // Navigation
-        document.getElementById("prev").addEventListener("click", async () => {
-          if (pageNum <= 1) return;
-          saveCurrentAnnotation();
-          pageNum--;
-          await renderPage(pageNum);
-        });
-        document.getElementById("next").addEventListener("click", async () => {
-          if (pageNum >= pdfDoc.numPages) return;
-          saveCurrentAnnotation();
-          pageNum++;
-          await renderPage(pageNum);
-        });
+        // Eventos de Navegación
+        document.getElementById("prev").onclick = () => { if (pageNum > 1) { annotations[pageNum] = overlayCanvas.toDataURL(); pageNum--; renderPage(pageNum); } };
+        document.getElementById("next").onclick = () => { if (pageNum < pdfDoc.numPages) { annotations[pageNum] = overlayCanvas.toDataURL(); pageNum++; renderPage(pageNum); } };
 
         // Zoom
-        document.getElementById("zoom_in").addEventListener("click", () => { scale += 0.2; renderPage(pageNum); });
-        document.getElementById("zoom_out").addEventListener("click", () => { if (scale > 0.3) { scale -= 0.2; renderPage(pageNum); } });
-        document.getElementById("zoom_reset").addEventListener("click", () => { scale = 1.0; renderPage(pageNum); });
+        document.getElementById("zoom_in").onclick = () => { scale += 0.2; renderPage(pageNum); };
+        document.getElementById("zoom_out").onclick = () => { scale = Math.max(0.4, scale - 0.2); renderPage(pageNum); };
+        document.getElementById("zoom_reset").onclick = () => { scale = 1.0; renderPage(pageNum); };
+
+        // Setup drawing events
+        setupDrawingEvents();
 
         // Edit mode toggle
         document.getElementById("btn_edit_mode").addEventListener("click", () => {
@@ -624,13 +631,15 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           const editBar = document.getElementById("edit-toolbar");
           const saveBtn = document.getElementById("btn_save_pdf");
           if (isEditMode) {
-            btn.classList.remove('btn-outline-warning'); btn.classList.add('btn-warning');
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-warning');
             editBar.style.display = 'flex';
             saveBtn.style.display = 'inline-block';
             overlayCanvas.style.pointerEvents = 'auto';
             overlayCanvas.style.cursor = 'crosshair';
           } else {
-            btn.classList.remove('btn-warning'); btn.classList.add('btn-outline-warning');
+            btn.classList.remove('btn-warning');
+            btn.classList.add('btn-success');
             editBar.style.display = 'none';
             saveBtn.style.display = 'none';
             overlayCanvas.style.pointerEvents = 'none';
@@ -663,7 +672,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
             for (const r of rows) {
               if (!r.archivo) continue;
               const url = '../attachments/' + encodeURIComponent(r.archivo);
-              
+
               let displayDate;
               if (r.version_timestamp) {
                 const date = new Date(parseInt(r.version_timestamp));
@@ -687,7 +696,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
               } else {
                 displayDate = 'Sin fecha';
               }
-              
+
               html += `<a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="${url}" target="_blank">`;
               html += `<div><strong>${displayDate}</strong></div>`;
               html += `<div>
@@ -701,9 +710,12 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
             Swal.fire({
               title: 'Versiones del adjunto',
               html,
-              width: '60%',
+              width: '90%',
               showConfirmButton: false,
               showCloseButton: true,
+              customClass: {
+                popup: 'versiones-modal'
+              },
               didOpen: () => {
                 // Attach delegated click handlers inside the Swal content
                 const container = document.querySelector('.swal2-html-container');
@@ -753,10 +765,36 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         const setActiveTool = (tool) => {
           currentTool = tool;
           ['tool_pen','tool_highlight','tool_text','tool_eraser'].forEach(id => {
-            document.getElementById(id).classList.toggle('btn-dark', id === `tool_${tool}`);
-            document.getElementById(id).classList.toggle(`btn-outline-${id === 'tool_eraser' ? 'secondary' : 'dark'}`, id !== `tool_${tool}`);
+            const btn = document.getElementById(id);
+            if (btn) {
+              btn.classList.toggle('btn-dark', id === `tool_${tool}`);
+              btn.classList.toggle('btn-outline-dark', id !== `tool_${tool}`);
+            }
           });
           overlayCanvas.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
+
+          // Cambiar color predefinido según la herramienta
+          const colorInput = document.getElementById("draw_color");
+          if (colorInput) {
+            switch(tool) {
+              case 'pen':
+                drawColor = '#2196f3'; // Azul medio
+                colorInput.value = '#2196f3';
+                break;
+              case 'highlight':
+                drawColor = '#ffeb3b'; // Amarillo claro
+                colorInput.value = '#ffeb3b';
+                lineWidth = 8; // El resaltador es más grueso
+                break;
+              case 'text':
+                drawColor = '#2196f3'; // Azul medio para texto
+                colorInput.value = '#2196f3';
+                break;
+              case 'eraser':
+                // El borrador no usa color, pero mantenemos el azul como base
+                break;
+            }
+          }
         };
         document.getElementById("tool_pen").addEventListener("click", () => setActiveTool('pen'));
         document.getElementById("tool_highlight").addEventListener("click", () => setActiveTool('highlight'));
@@ -764,17 +802,17 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         document.getElementById("tool_eraser").addEventListener("click", () => setActiveTool('eraser'));
 
         document.getElementById("draw_color").addEventListener("input", (e) => { drawColor = e.target.value; });
-        document.getElementById("line_width").addEventListener("change", (e) => { lineWidth = parseInt(e.target.value); });
+        document.getElementById("line_width")?.addEventListener("change", (e) => { lineWidth = parseInt(e.target.value); });
 
         document.getElementById("btn_clear_page").addEventListener("click", () => {
           overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
           delete annotations[pageNum];
         });
 
-      } catch (error) {
-        console.error("Error al cargar PDF:", error);
+      } catch (err) {
+        console.error("Error PDF:", err);
       }
-    },
+    }
   });
 };
 
@@ -786,6 +824,18 @@ window.editarTarea = () => {
 };
 window.gotoComentarioTarea = () => {
   window.location.href = "./envios/comentario.php";
+};
+window.gotoComentarioEnvio = () => {
+  const envioId = parseInt(sessionStorage.getItem("envio_id"));
+  const numEnvio = sessionStorage.getItem("num_envio") || '';
+  if (envioId && !isNaN(envioId)) {
+    window.location.href = `comentarios.php?envio_id=${envioId}&num_envio=${numEnvio}`;
+  } else {
+    Swal.fire('Error', 'No hay tarea seleccionada', 'error');
+  }
+};
+window.openComments = (envioId, numEnvio) => {
+  window.location.href = `comentarios.php?envio_id=${envioId}&num_envio=${numEnvio}`;
 };
 
 const eliminarEnvio = async () => {
@@ -801,7 +851,7 @@ const eliminarEnvio = async () => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     if (response.data.success) {
       window.location.href = "./main.php";
@@ -817,13 +867,13 @@ const changeStatus = async (status) => {
   };
   switch (status) {
     case "pendiente":
-      data.estado = 1
+      data.estado = 1;
       break;
     case "en_curso":
-      data.estado = 2
+      data.estado = 2;
       break;
     case "finalizado":
-      data.estado =3
+      data.estado = 3;
       break;
   }
 
@@ -836,7 +886,7 @@ const changeStatus = async (status) => {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     if (response.data.success) {
       window.location.href = "./main.php";
@@ -847,16 +897,16 @@ const changeStatus = async (status) => {
 };
 
 const checkFinalizado = () => {
-    let filtrosRaw = sessionStorage.getItem("filtro_estados") || "1,2";
-    let filtros = filtrosRaw.split(',').map(Number);
-    const isChecked = document.getElementById('checkFinalizado').checked;
-    if (isChecked) {
-        if (!filtros.includes(3)) {
-            filtros.push(3);
-        }
-    } else {
-        filtros = filtros.filter(item => item !== 3);
+  let filtrosRaw = sessionStorage.getItem("filtro_estados") || "1,2";
+  let filtros = filtrosRaw.split(",").map(Number);
+  const isChecked = document.getElementById("checkFinalizado").checked;
+  if (isChecked) {
+    if (!filtros.includes(3)) {
+      filtros.push(3);
     }
-    sessionStorage.setItem("filtro_estados", filtros.join(','));
-     getListAllEnvios();
+  } else {
+    filtros = filtros.filter((item) => item !== 3);
+  }
+  sessionStorage.setItem("filtro_estados", filtros.join(","));
+  getListAllEnvios();
 };
