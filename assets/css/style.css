@@ -1118,18 +1118,18 @@
     flex-direction: column !important;
     align-items: flex-start !important;
   }
-  
+
   .versiones-modal .list-group-item > div:first-child {
     text-align: left !important;
     width: 100% !important;
     margin-bottom: 0.5rem !important;
   }
-  
+
   .versiones-modal .list-group-item > div:last-child {
     width: 100% !important;
     justify-content: flex-end !important;
   }
-  
+
   .versiones-modal .btn-sm {
     font-size: 0.9rem !important;
     padding: 0.5rem 1rem !important;
@@ -1165,7 +1165,7 @@
 
 /* Body */
 body {
-  background: #eee url(http://subtlepatterns.com/patterns/sativa.png);
+  background: #eee ;
   position: relative;
   height: 100%;
 }
