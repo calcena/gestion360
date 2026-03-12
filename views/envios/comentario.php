@@ -20,8 +20,8 @@ $_SESSION['base_path'] = dirname(__FILE__);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../../assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="../../assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/assets/images/icons/pwa-192.png">
+    <link rel="manifest" href="<?php echo $GLOBALS['pathUrl']; ?>manifest.json">
+    <link rel="apple-touch-icon" href="<?php echo $GLOBALS['pathUrl']; ?>assets/images/icons/pwa-192.png">
     <meta name="theme-color" content="#0d6efd">
     <meta name="mobile-web-app-capable" content="yes">
     <script src="../../assets/js/axios/axios.min.js?<?php random_file_enumerator() ?>"></script>
