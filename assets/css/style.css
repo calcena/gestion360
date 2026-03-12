@@ -1165,7 +1165,7 @@
 
 /* Body */
 body {
-  background: #eee url(http://subtlepatterns.com/patterns/sativa.png);
+  background: #eee url();
   position: relative;
   height: 100%;
 }
