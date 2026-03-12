@@ -1,16 +1,20 @@
 <?php
-
+ 
 $root = dirname(__DIR__);
 require_once $root . '/helpers/config.php';
 require_once $root . '/database/DatabaseConnection.php';
+require_once $root . '/helpers/helper.php';
 require_once $root . '/models/envio.php';
-
+ 
 global $db;
-
+ 
+get_session_status();
+check_security(); // Ensure user is authenticated
+ 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
+ 
 $action = defined('ACTION') ? ACTION : ($_GET ? array_keys($_GET)[0] : '');
 
 function handle_get_envios()
@@ -100,6 +104,56 @@ function handle_get_tarea_by_id()
 
     try {
         $entity = get_tarea_by_id($params);
+        echo json_encode([
+            'success' => true,
+            'content' => $entity
+        ]);
+    } catch (Exception $e) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+function handle_edit_priority()
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+        return;
+    }
+    $input = json_decode(file_get_contents('php://input'), true);
+    $params = $input['data'];
+
+    try {
+        $entity = edit_priority($params);
+        echo json_encode([
+            'success' => true,
+            'content' => $entity
+        ]);
+    } catch (Exception $e) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+function handle_edit_state()
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+        return;
+    }
+    $input = json_decode(file_get_contents('php://input'), true);
+    $params = $input['data'];
+
+    try {
+        $entity = edit_state($params);
         echo json_encode([
             'success' => true,
             'content' => $entity
@@ -432,6 +486,12 @@ switch ($action) {
         break;
     case 'editEnvio':
         handle_edit_envio();
+        break;
+    case 'editPriority':
+        handle_edit_priority();
+        break;
+    case 'editState':
+        handle_edit_state();
         break;
     case 'getTareaById':
         handle_get_tarea_by_id();

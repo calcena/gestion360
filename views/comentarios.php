@@ -14,10 +14,11 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="<?php echo get_app_base_path(); ?>manifest.json">
   <link rel="apple-touch-icon" href="<?php echo get_app_base_path(); ?>assets/images/icons/pwa-192.png">
   <meta name="theme-color" content="#0d6efd">
   <meta name="mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="../assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="../assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
   <script src="../assets/js/axios/axios.min.js?<?php random_file_enumerator() ?>"></script>
   <script src="../assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

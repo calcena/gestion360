@@ -25,14 +25,24 @@ gestion_pedidos/
 ├── views/              # PHP Views (presentation)
 │   ├── main.php
 │   ├── envios/
+│   │   └── envio.php  # Create/Edit task page
+│   ├── comentarios.php
 │   └── components/
+│       ├── sidebar.php  # Lateral menu with user info
+│       └── footer.php
 ├── services/           # JavaScript frontend services
 │   ├── main/
+│   │   ├── main.js     # Main dashboard logic
+│   │   └── pwa.js      # Service worker unregister (disabled)
 │   ├── login/
+│   │   ├── login.js    # Authentication
+│   │   └── pwa.js      # Service worker unregister (disabled)
 │   ├── envios/
 │   ├── logs/
 │   ├── translate/
-│   └── helpers/
+│   ├── helpers/
+│   └── components/
+│       └── sitebar.js  # Lateral menu logic
 ├── helpers/            # PHP helpers & config
 │   ├── config.php      # Loads .env configuration
 │   └── helper.php
@@ -41,13 +51,15 @@ gestion_pedidos/
 ├── assets/             # Static assets
 │   ├── css/
 │   ├── js/
-│   └── images/
+│   │   └── axios/      # Axios library
+│   └── images/icons/   # UI icons
 ├── database/           # Database schemas
 ├── tests/              # Test files
 ├── repositories/       # Data repositories
-├── photos/             # User/uploaded photos
+├── photos/            # User/uploaded photos
 ├── attachments/        # File attachments
-└── index.php           # Entry point (login page)
+├── manifest.json      # PWA manifest (disabled)
+└── index.php          # Entry point (login page)
 ```
 
 ## Configuration
@@ -66,17 +78,57 @@ gestion_pedidos/
 
 ## Key Features
 - User authentication (login)
-- Shipment management (envios)
+- Shipment management (envios/tasks)
 - Subtasks (subtareas)
 - Multi-language support (translate)
-- File attachments
+- File attachments (PDF)
 - Logging system
 - Background email jobs
+- Lateral menu with user info
 
 ## Entry Points
 - `index.php` - Login page
 - `views/main.php` - Main dashboard (after auth)
+- `views/envios/envio.php?modo=nuevo` - Create new task
+- `views/envios/envio.php?modo=edit&envio_id=X` - Edit task
 - `controllers/*.php` - API endpoints
+
+## Navigation Depth System
+The application uses `$navigation_deep` variable to handle relative paths across different directory levels:
+
+| Page | navigation_deep | Base Path |
+|------|-----------------|-----------|
+| views/main.php | 0 | ../ |
+| views/envios/envio.php | 2 | ../../ |
+
+Used in:
+- `views/components/sidebar.php` - For icon paths and menu actions
+- `services/components/sitebar.js` - For navigation links
+
+## UI Changes (Recent)
+
+### Sidebar (views/components/sidebar.php)
+- Shows logged user name at bottom (green color #228B22)
+- Uses flexbox with `mt-auto` class for positioning
+- Includes: search input, create task (role 1-2), exit option
+
+### Task Creation/Edit (views/envios/envio.php)
+- Upload icon changed from `pdf_envio.png` to `upload.png`
+- Priority and attachment in same row (responsive)
+- Priority selector available when creating (not only after saving)
+- Back button removed from header
+- Badge removed from header
+
+### CSS (assets/css/style.css)
+- `.lateral-menu` - Fixed sidebar menu styling
+- `.lateral-menu .menu-items` - Flex container for menu items
+- `.menu-icon-right` - Menu item icons
+
+## PWA/Service Worker (DISABLED)
+- `service-worker.js` removed from root
+- `services/main/pwa.js` - Contains unregister code
+- `services/login/pwa.js` - Contains unregister code
+- `manifest.json` - Still present but not actively used
 
 ## PDF Viewer Editor
 Located in `services/main/main.js`:

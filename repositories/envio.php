@@ -107,19 +107,25 @@ function siguiente_numerador($params)
 function create_new_tarea($params)
 {
     $db = conectar();
+    
+    // Extraer solo el número del num_envio (antes del /)
+    $numEnvioParts = explode('/', $params["num_envio"]);
+    $numeroEnvio = intval($numEnvioParts[0]);
+    
     $stmt = $db->prepare("
                                 insert into envio (registro, num_envio, emisor_id,  descripcion, prioridad_id, estado_id)
                                 values (?,?,?,?,?,?)
                                 ");
-    $stmt->execute([$params["registro"], $params["num_envio"],1 , $params["descripcion"], $params["prioridad_id"], $params["estado_id"]]);
+    $stmt->execute([$params["registro"], $params["num_envio"], 1, $params["descripcion"], $params["prioridad_id"], $params["estado_id"]]);
 
     $envio_id = $db->lastInsertId();
     
     if ($envio_id > 0) {
+        // Actualizar el contador con solo el número (sin el año)
         $stmt_contador = $db->prepare("
                                 update contador set envio=?
                                 where id = 1");
-        $stmt_contador->execute([$params["envio"]]);
+        $stmt_contador->execute([$numeroEnvio]);
         
         // Log the creation
         $usuario_id = (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) ? $_SESSION['user']['id'] : null;
@@ -148,15 +154,15 @@ function get_tarea($params)
 {
     $db = conectar();
     $stmt = $db->prepare("
-                                select
-                                t.*,
-								(select inicio from tiempo where tarea_id = ? order by registro desc limit 1) as tiempo_inicio,
-								(select fin from tiempo where tarea_id = ? order by registro desc limit 1) as tiempo_fin
-                                from
-                                tarea as t
-                                where id= ?
-                                ");
-    $stmt->execute([$params["tarea_id"], $params["tarea_id"], $params["tarea_id"]]);
+                                 select
+                                 e.*,
+                                 NULL as tiempo_inicio,
+                                 NULL as tiempo_fin
+                                 from
+                                 envio as e
+                                 where e.id= ?
+                                 ");
+    $stmt->execute([$params["tarea_id"]]);
     $entity = $stmt->fetchAll(PDO::FETCH_ASSOC);
     return $entity;
 }

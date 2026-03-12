@@ -70,18 +70,7 @@ function renderComments(comments) {
         return;
     }
 
-    let html = `
-        <table class="table table-striped table-hover">
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Comentario</th>
-              <th>Fecha</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
+    let html = '';
 
     comments.forEach(comment => {
         const date = new Date(comment.registro);
@@ -94,25 +83,22 @@ function renderComments(comments) {
         });
 
         html += `
-            <tr data-comment-id="${comment.id}">
-                <td class="align-middle table-comments">${escapeHtml(comment.nombre_usuario || 'Usuario')}</td>
-                <td class="align-middle table-comments">${escapeHtml(comment.descripcion)}</td>
-                <td class="align-middle table-comments">${dateStr}</td>
-                <td class="align-middle table-comments">
-                    ${comment.usuario_id == ${userId} ? `
+            <div class="comment-card" data-comment-id="${comment.id}">
+                <div class="comment-header">
+                    <span class="comment-author">${escapeHtml(comment.nombre_usuario || 'Usuario')}</span>
+                    <span class="comment-time">${dateStr}</span>
+                </div>
+                <div class="comment-text">${escapeHtml(comment.descripcion)}</div>
+                ${comment.usuario_id == userId ? `
+                    <div class="text-end mt-2">
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
-                            <i class="fas fa-trash"></i>
+                            <i class="fas fa-trash"></i> Eliminar
                         </button>
-                    ` : ''}
-                </td>
-            </tr>
+                    </div>
+                ` : ''}
+            </div>
         `;
     });
-
-    html += `
-          </tbody>
-        </table>
-    `;
 
     container.innerHTML = html;
 }

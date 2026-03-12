@@ -735,6 +735,17 @@
   overflow-y: auto;
 }
 
+.lateral-menu .menu-items {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 20px;
+}
+
+.lateral-menu .menu-items .mt-auto {
+  margin-top: auto;
+}
+
 .lateral-menu.open {
   right: 0;
 }

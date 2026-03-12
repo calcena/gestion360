@@ -858,8 +858,14 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
 window.initMain = initMain;
 window.viewAttachFile = viewAttachFile;
 window.editarTarea = () => {
-  window.location.href = "envios/envio.php?modo=edit";
+  const envioId = sessionStorage.getItem("envio_id");
+  if (envioId) {
+    window.location.href = `envios/envio.php?modo=edit&envio_id=${envioId}`;
+  } else {
+    Swal.fire('Error', 'No hay tarea seleccionada', 'error');
+  }
 };
+window.editarEnvio = window.editarTarea;
 window.gotoComentarioTarea = () => {
   window.location.href = "./envios/comentario.php";
 };
@@ -899,6 +905,8 @@ const eliminarEnvio = async () => {
   }
 };
 
+window.eliminarEnvio = eliminarEnvio;
+
 const changeStatus = async (status) => {
   const data = {
     envio: sessionStorage.getItem("envio_id"),
@@ -933,6 +941,8 @@ const changeStatus = async (status) => {
     console.error("error");
   }
 };
+
+window.changeStatus = changeStatus;
 
 const checkFinalizado = () => {
   let filtrosRaw = sessionStorage.getItem("filtro_estados") || "1,2";

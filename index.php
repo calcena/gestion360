@@ -19,7 +19,6 @@ $_SESSION['base_project'] = dirname(__FILE__);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
-    <link rel="manifest" href="<?php echo get_app_base_path(); ?>manifest.json">
     <link rel="apple-touch-icon" href="<?php echo get_app_base_path(); ?>assets/images/icons/pwa-192.png">
     <meta name="theme-color" content="#0d6efd">
     <meta name="mobile-web-app-capable" content="yes">
@@ -29,7 +28,6 @@ $_SESSION['base_project'] = dirname(__FILE__);
     <script src="assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/logs/logs.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/translate/translate.js?<?php random_file_enumerator() ?>"></script>
-    <script src="services/login/pwa.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/login/login.js?<?php random_file_enumerator() ?>"></script>
     <title><?php echo APP_NAME . '_' . APP_VERSION ?></title>
 </head>

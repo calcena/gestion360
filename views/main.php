@@ -4,6 +4,7 @@ require_once '../helpers/config.php';
 get_session_status();
 debug_mode();
 $_SESSION['base_path'] = dirname(__FILE__);
+$navigation_deep = 0;
 ?>
 
 <!DOCTYPE html>
@@ -15,7 +16,6 @@ $_SESSION['base_path'] = dirname(__FILE__);
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="../assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="../assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
-  <link rel="manifest" href="<?php echo get_app_base_path(); ?>manifest.json">
   <link rel="apple-touch-icon" href="<?php echo get_app_base_path(); ?>assets/images/icons/pwa-192.png">
   <meta name="theme-color" content="#0d6efd">
   <meta name="mobile-web-app-capable" content="yes">
@@ -26,14 +26,17 @@ $_SESSION['base_path'] = dirname(__FILE__);
   <script src="../assets/js/axios/axios.min.js?<?php random_file_enumerator() ?>"></script>
   <script src="../assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>
   <script src="../services/helpers/helper.js?<?php random_file_enumerator() ?>"></script>
-  <script src="../services/main/main.js?<?php random_file_enumerator() ?>"></script>
   <script src="../services/components/sitebar.js?<?php random_file_enumerator() ?>"></script>
-  <script src="../services/translate/translate.js?<?php random_file_enumerator() ?>"></script>
+  <script src="../services/main/main.js?<?php random_file_enumerator() ?>"></script>
   <script src="../services/logs/logs.js?<?php random_file_enumerator() ?>"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-  <script src="../services/main/pwa.js?<?php random_file_enumerator() ?>"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      initMain();
+    });
+  </script>
   <title>Gestión de Pedidos</title>
 </head>
 
