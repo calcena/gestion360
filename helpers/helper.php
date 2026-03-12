@@ -2,13 +2,14 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+// Polyfill for getallheaders
 if (!function_exists('getallheaders')) {
     function getallheaders()
     {
         $headers = [];
         foreach ($_SERVER as $name => $value) {
             if (substr($name, 0, 5) === 'HTTP_') {
-                // Convertir HTTP_ACCEPT_ENCODING → Accept-Encoding
                 $headerName = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
                 $headers[$headerName] = $value;
             } elseif ($name === 'CONTENT_TYPE') {
@@ -42,6 +43,41 @@ function get_session_status()
     }
 }
 
+function get_app_base_path()
+{
+    // Find the project root directory (where index.php resides)
+    $dir = __DIR__;
+    $max_iterations = 10;
+    $iterations = 0;
+    while (!file_exists($dir . '/index.php') && $dir != dirname($dir) && $iterations < $max_iterations) {
+        $dir = dirname($dir);
+        $iterations++;
+    }
+    
+    // Convert filesystem path to URL path relative to document root
+    $doc_root = $_SERVER['DOCUMENT_ROOT'] ?? '';
+    $dir = str_replace('\\', '/', realpath($dir));
+    $doc_root = str_replace('\\', '/', realpath($doc_root));
+    
+    if ($dir && $doc_root && strpos($dir, $doc_root) === 0) {
+        $url_path = substr($dir, strlen($doc_root));
+        $url_path = str_replace('\\', '/', $url_path);
+        $url_path = trim($url_path, '/');
+        if ($url_path === '') {
+            return '/';
+        }
+        return '/' . $url_path . '/';
+    }
+    
+    // Fallback: detect from SCRIPT_NAME
+    $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+    $script_dir = dirname($script_name);
+    if ($script_dir === '/' || $script_dir === '\\' || $script_dir === '.') {
+        return '/';
+    }
+    return $script_dir . '/';
+}
+
 function debug_mode()
 {
     if (APP_ENV == "local" || APP_ENV == "dev") {
@@ -72,8 +108,8 @@ function show_envoironment_message()
 function new_guui_generator()
 {
     $bytes = random_bytes(16);
-    $bytes[6] = chr(ord($bytes[6]) & 0x0f | 0x40); // set version to 0100
-    $bytes[8] = chr(ord($bytes[8]) & 0x3f | 0x80); // set variant to 10xx
+    $bytes[6] = chr(ord($bytes[6]) & 0x0f | 0x40);
+    $bytes[8] = chr(ord($bytes[8]) & 0x3f | 0x80);
     $hex = bin2hex($bytes);
     return sprintf(
         '%08s-%04s-%04s-%04s-%12s',
@@ -85,14 +121,10 @@ function new_guui_generator()
     );
 }
 
-
 function check_security()
 {
-    // En el caso de no existir sesión redirigimos
     if (!isset($_SESSION['user'])) {
         header('Location: /index.php');
         exit;
     }
 }
-
-

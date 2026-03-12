@@ -1,9 +1,6 @@
 <?php
 require_once '../helpers/helper.php';
 require_once '../helpers/config.php';
-$GLOBALS['pathUrl'] = '../';
-$GLOBALS['navigation_deep'] = 0;
-$GLOBALS['hide_action_menu'] = 0;
 get_session_status();
 debug_mode();
 $_SESSION['base_path'] = dirname(__FILE__);
@@ -18,8 +15,10 @@ $_SESSION['base_path'] = dirname(__FILE__);
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="../assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="../assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
-  <link rel="manifest" href="<?php echo $GLOBALS['pathUrl']; ?>manifest.json">
-  <link rel="apple-touch-icon" href="<?php echo $GLOBALS['pathUrl']; ?>assets/images/icons/pwa-192.png">
+  <link rel="manifest" href="<?php echo get_app_base_path(); ?>manifest.json">
+  <link rel="apple-touch-icon" href="<?php echo get_app_base_path(); ?>assets/images/icons/pwa-192.png">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0d6efd">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
