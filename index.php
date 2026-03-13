@@ -29,20 +29,6 @@ $_SESSION['base_project'] = dirname(__FILE__);
     <script src="services/logs/logs.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/translate/translate.js?<?php random_file_enumerator() ?>"></script>
     <script src="services/login/login.js?<?php random_file_enumerator() ?>"></script>
-    <script>
-        // Register service worker for PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker registration failed: ', error);
-                    });
-            });
-        }
-    </script>
     <title><?php echo APP_NAME . '_' . APP_VERSION ?></title>
 </head>
 

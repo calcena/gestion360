@@ -77,6 +77,9 @@ function iniciarIntervaloVerificacion(rol = "default") {
 const comprobarNuevosEnvios = async () => {
   if (localStorage.getItem("alertas_sonoras_activas") !== "true") return;
 
+  // Always refresh the card data to update counts
+  await getListAllEnvios();
+
   const data = { usuario_id: sessionStorage.getItem("usuario_id") };
 
   try {
@@ -86,7 +89,6 @@ const comprobarNuevosEnvios = async () => {
     );
 
     if (response.data.content && response.data.content.counter_envio > 0) {
-      await getListAllEnvios();
       sessionStorage.setItem("envios_nuevos", response.data.content.lista_ids);
       llamarAtencionVisual("⚠️ NUEVO ENVÍO");
 
@@ -99,7 +101,6 @@ const comprobarNuevosEnvios = async () => {
         confirmButtonText: "Actualizar Lista",
         allowOutsideClick: false,
         didOpen: () => {
-          // Intentamos sonar. Si ya hubo un clic previo, sonará solo.
           sonidoAviso.currentTime = 0;
           sonidoAviso
             .play()
@@ -115,7 +116,7 @@ const comprobarNuevosEnvios = async () => {
       });
     }
   } catch (err) {
-    console.error("Error comprobación:", err);
+    console.error("Error checking new envios:", err);
   }
 };
 

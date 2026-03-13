@@ -25,6 +25,7 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
     const envioId = <?php echo $envio_id; ?>;
     const numEnvio = '<?php echo addslashes($num_envio); ?>';
     const currentUserId = <?php echo isset($_SESSION['user']['id']) ? intval($_SESSION['user']['id']) : 0; ?>;
+    const REFRESH_INTERVAL = 15000; // 15 seconds
   </script>
   <script src="../services/envios/comentario.js?<?php random_file_enumerator() ?>"></script>
   <script src="../assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>

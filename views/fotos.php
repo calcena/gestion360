@@ -16,7 +16,10 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="../assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="../assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
@@ -24,71 +27,6 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
   <script src="../assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <title>Fotos - Tarea <?php echo htmlspecialchars($num_envio); ?></title>
-  <style>
-    .photo-card {
-      background: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      padding: 12px;
-      margin-bottom: 10px;
-    }
-    .photo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
-      color: #666;
-    }
-    .photo-img {
-      width: 100%;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .photo-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 15px;
-    }
-    .camera-container {
-      background: #f5f5f5;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-    #video {
-      width: 100%;
-      max-width: 400px;
-      border-radius: 8px;
-      background: #000;
-    }
-    #canvas {
-      display: none;
-    }
-    .camera-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-    .photo-preview {
-      max-width: 100%;
-      max-height: 300px;
-      border-radius: 8px;
-      display: none;
-    }
-    .no-photos {
-      text-align: center;
-      color: #999;
-      padding: 20px;
-      font-style: italic;
-    }
-    .photo-actions {
-      display: flex;
-      gap: 5px;
-      margin-top: 8px;
-    }
-  </style>
 </head>
 
 <body class="main-body">
@@ -114,6 +52,7 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
       <video id="video" autoplay playsinline></video>
       <canvas id="canvas"></canvas>
       <img id="photo-preview" class="photo-preview" alt="Preview">
+      <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none;">
       <div class="camera-buttons">
         <button id="btn-start-camera" class="btn btn-success btn-sm">
           <i class="fas fa-play me-1"></i> Iniciar Cámara
@@ -137,12 +76,20 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
     </div>
   </div>
 
-  <!-- Modal para ver foto grande -->
+  <!-- Modal para ver foto grande con zoom -->
   <div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
       <div class="modal-content">
-        <div class="modal-body text-center">
-          <img id="modal-photo" src="" class="img-fluid" alt="Foto">
+        <div class="modal-header">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body text-center p-0">
+          <div class="photo-zoom-container">
+            <img id="modal-photo" src="" class="photo-zoom-img" alt="Foto">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <small class="text-muted">Pinchada o desliza para hacer zoom</small>
         </div>
       </div>
     </div>
@@ -151,8 +98,10 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
   <script>
     const envioId = <?php echo $envio_id; ?>;
     const numEnvio = '<?php echo addslashes($num_envio); ?>';
+    const REFRESH_INTERVAL = 15000; // 15 seconds
     let stream = null;
     let capturedImage = null;
+    let isCameraActive = false;
 
     if (!envioId || isNaN(envioId) || envioId === 0) {
       Swal.fire({
@@ -168,6 +117,13 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
     document.addEventListener('DOMContentLoaded', function() {
       loadPhotos();
       setupCamera();
+      
+      // Auto-refresh photos every 15 seconds (paused while using camera)
+      setInterval(() => {
+        if (!isCameraActive && !capturedImage) {
+          loadPhotos();
+        }
+      }, REFRESH_INTERVAL);
     });
 
     function setupCamera() {
@@ -178,11 +134,13 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
       const btnCapture = document.getElementById('btn-capture');
       const btnRetake = document.getElementById('btn-retake');
       const btnSave = document.getElementById('btn-save');
+      const fileInput = document.getElementById('file-input');
 
       btnStart.addEventListener('click', async () => {
+        isCameraActive = true;
         try {
           stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' },
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
             audio: false 
           });
           video.srcObject = stream;
@@ -192,11 +150,35 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
           btnCapture.style.display = 'inline-block';
         } catch (err) {
           console.error('Error accessing camera:', err);
-          Swal.fire('Error', 'No se pudo acceder a la cámara', 'error');
+          isCameraActive = false;
+          // Fallback: usar input file
+          fileInput.click();
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            capturedImage = event.target.result;
+            preview.src = capturedImage;
+            preview.style.display = 'block';
+            video.style.display = 'none';
+            btnStart.style.display = 'none';
+            btnCapture.style.display = 'none';
+            btnRetake.style.display = 'inline-block';
+            btnSave.style.display = 'inline-block';
+          };
+          reader.readAsDataURL(file);
         }
       });
 
       btnCapture.addEventListener('click', () => {
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+          Swal.fire('Error', 'La cámara no está lista', 'error');
+          return;
+        }
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0);
@@ -205,6 +187,7 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
         preview.src = capturedImage;
         preview.style.display = 'block';
         video.style.display = 'none';
+        isCameraActive = false;
         
         if (stream) {
           stream.getTracks().forEach(track => track.stop());
@@ -219,9 +202,13 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
         capturedImage = null;
         preview.style.display = 'none';
         
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        
         try {
           stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' },
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
             audio: false 
           });
           video.srcObject = stream;
@@ -229,9 +216,10 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
           btnRetake.style.display = 'none';
           btnSave.style.display = 'none';
           btnCapture.style.display = 'inline-block';
+          isCameraActive = true;
         } catch (err) {
           console.error('Error accessing camera:', err);
-          Swal.fire('Error', 'No se pudo acceder a la cámara', 'error');
+          fileInput.click();
         }
       });
 
@@ -267,7 +255,7 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
         return;
       }
 
-      let html = '';
+      let html = '<div class="photo-list">';
       photos.forEach(photo => {
         const date = new Date(photo.registro);
         const dateStr = date.toLocaleDateString('es-ES', {
@@ -279,19 +267,19 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
         });
 
         html += `
-          <div class="photo-card" data-photo-id="${photo.id}">
-            <div class="photo-header">
-              <span>${dateStr}</span>
+          <div class="photo-list-item" onclick="showPhotoModal('../photos/${photo.uuid}')">
+            <img src="../photos/${photo.uuid}" class="photo-thumbnail" alt="Foto">
+            <div class="photo-list-info">
+              <span class="photo-list-date">${dateStr}</span>
             </div>
-            <img src="../photos/${photo.uuid}" class="photo-img" onclick="showPhotoModal('../photos/${photo.uuid}')" alt="Foto">
-            <div class="photo-actions">
-              <button class="btn btn-sm btn-outline-danger" onclick="deletePhoto(${photo.id})">
-                <i class="fas fa-trash"></i> Eliminar
-              </button>
-            </div>
+            <button class="btn btn-sm btn-outline-danger photo-list-delete" onclick="event.stopPropagation(); deletePhoto(${photo.id})">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
         `;
       });
+
+      html += '</div>';
 
       container.innerHTML = html;
     }
@@ -369,10 +357,75 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
     }
 
     function showPhotoModal(src) {
-      document.getElementById('modal-photo').src = src;
+      const modalImg = document.getElementById('modal-photo');
+      modalImg.src = src;
+      modalImg.style.transform = 'scale(1)';
+      modalImg.style.transformOrigin = 'center center';
+      
       const modal = new bootstrap.Modal(document.getElementById('photoModal'));
       modal.show();
+      
+      // Reset zoom when modal closes
+      document.getElementById('photoModal').addEventListener('hidden.bs.modal', function() {
+        modalImg.style.transform = 'scale(1)';
+      }, { once: true });
     }
+
+    // Zoom functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const modalImg = document.getElementById('modal-photo');
+      let scale = 1;
+      let startX = 0;
+      let startY = 0;
+      let isDragging = false;
+      
+      // Click to zoom
+      modalImg.addEventListener('click', function() {
+        if (scale === 1) {
+          scale = 2;
+          modalImg.style.transform = 'scale(2)';
+          modalImg.style.transformOrigin = 'center center';
+        } else {
+          scale = 1;
+          modalImg.style.transform = 'scale(1)';
+        }
+      });
+      
+      // Touch pinch to zoom
+      let initialDistance = 0;
+      modalImg.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+          initialDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+        }
+      });
+      
+      modalImg.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const currentDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          
+          if (initialDistance > 0) {
+            const scaleDiff = currentDistance / initialDistance;
+            scale = Math.min(Math.max(scale * scaleDiff, 1), 4);
+            modalImg.style.transform = `scale(${scale})`;
+          }
+        }
+      });
+      
+      modalImg.addEventListener('touchend', function() {
+        initialDistance = 0;
+        if (scale < 1.1) {
+          scale = 1;
+          modalImg.style.transform = 'scale(1)';
+        }
+      });
+    });
 
     function showError(message) {
       Swal.fire('Error', message, 'error');

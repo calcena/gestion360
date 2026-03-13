@@ -1,4 +1,8 @@
 // Cargar comentarios al iniciar
+let refreshInterval = null;
+let isUserTyping = false;
+let typingTimeout = null;
+
 document.addEventListener("DOMContentLoaded", function () {
   // Validar que tenemos un envio_id válido
   if (!envioId || isNaN(envioId) || envioId === 0) {
@@ -15,19 +19,39 @@ document.addEventListener("DOMContentLoaded", function () {
 
   loadComments();
 
+  // Auto-refresh comments every 15 seconds
+  refreshInterval = setInterval(() => {
+    if (!isUserTyping) {
+      loadComments();
+    }
+  }, REFRESH_INTERVAL);
+
+  const commentInput = document.getElementById("new-comment-text");
+
+  // Detectar cuando el usuario está escribiendo
+  commentInput.addEventListener("input", function() {
+    isUserTyping = true;
+    // Cancelar cualquier timeout previo
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+    // Reanudar refresh 3 segundos después de que deixe de escribir
+    typingTimeout = setTimeout(() => {
+      isUserTyping = false;
+    }, 3000);
+  });
+
   // Evento para enviar comentario
   document
     .getElementById("btn-send-comment")
     .addEventListener("click", sendComment);
 
   // Permitir enviar con Ctrl+Enter
-  document
-    .getElementById("new-comment-text")
-    .addEventListener("keydown", function (e) {
-      if (e.ctrlKey && e.key === "Enter") {
-        sendComment();
-      }
-    });
+  commentInput.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && e.key === "Enter") {
+      sendComment();
+    }
+  });
 });
 
 async function loadComments() {
@@ -126,6 +150,10 @@ async function sendComment() {
 
     if (response.data.success) {
       textArea.value = "";
+      isUserTyping = false;
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
       loadComments();
       Swal.fire({
         icon: "success",

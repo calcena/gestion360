@@ -33,20 +33,6 @@ $_SESSION['base_path'] = dirname(__FILE__);
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-  <script>
-    // Register service worker for PWA
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('../service-worker.js')
-          .then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          })
-          .catch(error => {
-            console.log('ServiceWorker registration failed: ', error);
-          });
-      });
-    }
-  </script>
   <title>Gestión de Pedidos</title>
 </head>
 
@@ -90,32 +76,32 @@ $_SESSION['base_path'] = dirname(__FILE__);
     <div class="d-flex flex-column gap-3 p-3">
       <hr class="my-1">
       <?php if ($_SESSION['user']['role_id'] == 1 || $_SESSION['user']['role_id'] == 2): ?>
-        <div class="action-panel-item" onclick="editarEnvio()">
-          <img class="me-2" src="../assets/images/icons/pencil.png" width="20"> Editar tarea
-        </div>
-        <div class="action-panel-item" onclick="eliminarEnvio()">
-          <img class="me-2" src="../assets/images/icons/papelera.png" width="20"> Eliminar tarea
-        </div>
-      <?php endif; ?>
-      <div class="action-panel-item" onclick="gotoComentarioEnvio()">
-        <img class="me-2" src="../assets/images/icons/comment.png" width="20"> Comentarios
+          <div class="action-panel-item" onclick="editarEnvio()">
+        <img class="me-2" src="../assets/images/icons/pencil.png" width="20"> Editar tarea
       </div>
-      <div class="action-panel-item" onclick="gotoFotoEnvio()">
-        <i class="fas fa-camera me-2 action-panel-camera-icon"></i> Fotos
+      <div class="action-panel-item" onclick="eliminarEnvio()">
+        <img class="me-2" src="../assets/images/icons/papelera.png" width="20"> Eliminar tarea
       </div>
-      <hr class="my-1">
-      <div id="estados" class="">
-        <div class="status-option" onclick="changeStatus('pendiente')">
-          <span class="status-dot status-dot-pendiente"></span> Pendiente
-        </div>
-        <div class="status-option mt-3" onclick="changeStatus('en_curso')">
-          <span class="status-dot status-dot-en_curso"></span> En curso
-        </div>
-        <div class="status-option mt-3" onclick="changeStatus('finalizado')">
-          <span class="status-dot status-dot-finalizado"></span> Finalizado
-        </div>
-      </div>
+    <?php endif; ?>
+    <div class="action-panel-item" onclick="gotoComentarioEnvio()">
+    <img class="me-2" src="../assets/images/icons/comment.png" width="20"> Comentarios
+  </div>
+  <div class="action-panel-item" onclick="gotoFotoEnvio()">
+    <i class="fas fa-camera me-2 action-panel-camera-icon"></i> Fotos
+  </div>
+  <hr class="my-1">
+  <div id="estados" class="">
+    <div class="status-option" onclick="changeStatus('pendiente')">
+      <span class="status-dot status-dot-pendiente"></span> Pendiente
     </div>
+    <div class="status-option mt-3" onclick="changeStatus('en_curso')">
+      <span class="status-dot status-dot-en_curso"></span> En curso
+    </div>
+    <div class="status-option mt-3" onclick="changeStatus('finalizado')">
+      <span class="status-dot status-dot-finalizado"></span> Finalizado
+    </div>
+  </div>
+  </div>
   </div>
 
 </body>
