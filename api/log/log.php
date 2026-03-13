@@ -1,7 +1,7 @@
 <?php
 define('ROOT_PATH', dirname(dirname(__DIR__)));
 require_once ROOT_PATH . '/helpers/config.php';
-require_once ROOT_PATH . '/database/DatabaseConnection.php';
+require_once ROOT_PATH . '/helpers/helper.php';
 
 if (!defined('API_KEY_BACK') || API_KEY_BACK === '') {
     error_log("ERROR: API_KEY_BACK no está definida o está vacía");
@@ -10,9 +10,7 @@ if (!defined('API_KEY_BACK') || API_KEY_BACK === '') {
     exit;
 }
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+get_session_status();
 
 $headers = getallheaders();
 $provided_token = $headers['api-key'] ?? $headers['Api-Key'] ?? '';

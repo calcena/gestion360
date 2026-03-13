@@ -1547,6 +1547,54 @@ body {
   margin-bottom: 1rem;
 }
 
+/* Comment cards (new design) */
+.comments-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comment-card-item {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 12px 15px;
+  border-left: 3px solid #2e7d32;
+}
+
+.comment-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.comment-card-user {
+  font-weight: 600;
+  color: #2e7d32;
+  font-size: 0.9rem;
+}
+
+.comment-card-date {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.comment-card-body {
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.comment-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+}
+
 /* Card footer action items (comments/photos) */
 .card-footer-action {
   cursor: pointer;

@@ -4,10 +4,8 @@ require_once '../../helpers/config.php';
 
 header('Content-Type: application/json');
 
-// Iniciar sesión
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Iniciar sesión usando la función del helper (configura el path correctamente para hosting)
+get_session_status();
 
 // Asegurar que DB_PATH esté definido
 if (!defined('DB_PATH')) {

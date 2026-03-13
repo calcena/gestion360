@@ -21,6 +21,11 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
   <link href="../assets/css/bootstrap/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="../assets/css/style.css?<?php random_file_enumerator() ?>" rel="stylesheet" type="text/css">
   <script src="../assets/js/axios/axios.min.js?<?php random_file_enumerator() ?>"></script>
+  <script>
+    const envioId = <?php echo $envio_id; ?>;
+    const numEnvio = '<?php echo addslashes($num_envio); ?>';
+    const currentUserId = <?php echo isset($_SESSION['user']['id']) ? intval($_SESSION['user']['id']) : 0; ?>;
+  </script>
   <script src="../services/envios/comentario.js?<?php random_file_enumerator() ?>"></script>
   <script src="../assets/js/bootstrap/bootstrap.min.js?<?php random_file_enumerator() ?>"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -55,10 +60,9 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
       </div>
     </div>
 
-    <!-- Lista de comentarios -->
-    <div id="comments-list">
-      <div class="no-comments">Cargando comentarios...</div>
-    </div>
+  <!-- Lista de comentarios -->
+  <div id="comments-list">
+    <div class="no-comments">Cargando comentarios...</div>
   </div>
 </body>
 

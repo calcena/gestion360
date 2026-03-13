@@ -1,5 +1,18 @@
 // Cargar comentarios al iniciar
 document.addEventListener("DOMContentLoaded", function () {
+  // Validar que tenemos un envio_id válido
+  if (!envioId || isNaN(envioId) || envioId === 0) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No se ha especificado una tarea válida',
+      confirmButtonText: 'Volver'
+    }).then(() => {
+      window.location.href = 'main.php';
+    });
+    return;
+  }
+
   loadComments();
 
   // Evento para enviar comentario
@@ -42,7 +55,6 @@ async function loadComments() {
 function renderComments(comments) {
   const container = document.getElementById("comments-list");
 
-  // 1. Verificación de seguridad básica
   if (!container) return;
 
   if (!comments || comments.length === 0) {
@@ -51,21 +63,8 @@ function renderComments(comments) {
     return;
   }
 
-  // 2. Inicio de la cadena HTML
-  let html = `
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>Usuario</th>
-                    <th>Comentario</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+  let html = '<div class="comments-cards">';
 
-  // 3. Generación de filas
   comments.forEach((comment) => {
     const date = new Date(comment.registro);
     const dateStr = date.toLocaleDateString("es-ES", {
@@ -76,25 +75,29 @@ function renderComments(comments) {
       minute: "2-digit",
     });
 
-    // ERROR CORREGIDO: Se eliminó el " : ''}" que estaba suelto y se cerró bien el template string
+    const canDelete = comment.usuario_id == currentUserId;
+
     html += `
-            <tr data-comment-id="${comment.id}">
-                <td class="align-middle table-comments">${escapeHtml(comment.nombre_usuario || "Usuario")}</td>
-                <td class="align-middle table-comments">${escapeHtml(comment.descripcion)}</td>
-                <td class="align-middle table-comments">${dateStr}</td>
-                <td class="align-middle table-comments">
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
+      <div class="comment-card-item" data-comment-id="${comment.id}">
+        <div class="comment-card-header">
+          <span class="comment-card-user">${escapeHtml(comment.nombre_usuario || "Usuario")}</span>
+          <span class="comment-card-date">${dateStr}</span>
+        </div>
+        <div class="comment-card-body">
+          ${escapeHtml(comment.descripcion)}
+        </div>
+        ${canDelete ? `
+        <div class="comment-card-actions">
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        ` : ''}
+      </div>
+    `;
   });
 
-  html += `
-            </tbody>
-        </table>
-    `;
+  html += '</div>';
 
   container.innerHTML = html;
 }
