@@ -80,6 +80,12 @@ function get_audit_logs($params){
     return $entity;
 }
 
+function get_envio_data($params){
+    global $db;
+    $entity = get_envio_by_id($params);
+    return $entity;
+}
+
 
 
 

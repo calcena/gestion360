@@ -272,9 +272,14 @@ $num_envio = isset($_GET['num_envio']) ? $_GET['num_envio'] : '';
             <div class="photo-list-info">
               <span class="photo-list-date">${dateStr}</span>
             </div>
-            <button class="btn btn-sm btn-outline-danger photo-list-delete" onclick="event.stopPropagation(); deletePhoto(${photo.id})">
-              <i class="fas fa-trash"></i>
-            </button>
+            <div class="photo-list-actions">
+              <a href="../photos/${photo.uuid}" download="${photo.uuid}" class="btn btn-sm btn-primary photo-list-download" onclick="event.stopPropagation();">
+                <i class="fas fa-download"></i>
+              </a>
+              <button class="btn btn-sm btn-outline-danger photo-list-delete" onclick="event.stopPropagation(); deletePhoto(${photo.id})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
           </div>
         `;
       });

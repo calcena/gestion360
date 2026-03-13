@@ -9,7 +9,7 @@ if ($source == 'main') {
     $level = './';
 }
 ?>
-<span>© Gestión de pedidos</span>
+<span>© Gestión de tareas C. Ponç</span>
 <p class="mt-4"></p>
 <?php
 show_envoironment_message()

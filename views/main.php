@@ -71,6 +71,10 @@ $_SESSION['base_path'] = dirname(__FILE__);
     <div class="d-flex justify-content-center gap-2 px-3 py-2">
       <span id="menu_lateral_num_envio" class="badge badge-envio"></span>
       <span id="menu_lateral_estado" class="badge"></span>
+      <input type="hidden" id="menu_lateral_emisor_id" value="">
+      <input type="hidden" id="menu_lateral_descripcion" value="">
+      <input type="hidden" id="menu_lateral_prioridad_id" value="">
+      <input type="hidden" id="menu_lateral_adjunto" value="">
     </div>
 
     <div class="d-flex flex-column gap-3 p-3">

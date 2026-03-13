@@ -127,9 +127,30 @@
   border-top: 1px solid #e8f5e9;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   flex-wrap: nowrap;
   min-height: 2rem;
+}
+
+.task-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.task-footer-center {
+  flex-grow: 1;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+.task-priority-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .comment-card {
@@ -188,8 +209,18 @@
 @media (max-width: 767px) {
   .task-card-footer .task-icon,
   .task-card-footer img {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .task-priority-icon {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .task-status-badge {
+    font-size: 0.65rem;
+    padding: 1px 6px;
   }
 
   .task-card-body .attached-card {
@@ -206,9 +237,9 @@
   }
 
   .status-dot {
-    width: 14px;
-    min-width: 14px;
-    height: 14px;
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
   }
 
   .icon-card {
@@ -344,7 +375,7 @@
 }
 
 .badge-envio {
-  background-color: #2e7d32;
+  background-color: #212529;
   color: #ffffff;
 }
 
@@ -381,9 +412,9 @@
 }
 
 .status-dot {
-  width: 12px;
-  min-width: 12px;
-  height: 12px;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
   border-radius: 50%;
   display: inline-block;
 }
@@ -778,15 +809,26 @@
   right: -320px;
   width: 200px;
   height: 100vh;
+  height: 100dvh;
   background: white;
   box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
   z-index: 1050;
   transition: right 0.3s ease;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .lateral-menu.open {
   right: 0;
+}
+
+.lateral-menu .menu-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .menu-icon {
@@ -813,6 +855,23 @@
 
 .menu-item:hover {
   background-color: #f8f9fa;
+}
+
+.sidebar-user-info {
+  margin-top: auto;
+  padding: 15px 10px;
+  padding-bottom: max(15px, env(safe-area-inset-bottom, 15px));
+  text-align: center;
+  border-top: 1px solid #e8f5e9;
+  background: white;
+  position: sticky;
+  bottom: 0;
+}
+
+.sidebar-user-name {
+  color: #2e7d32;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 /* Overlay oscuro */
@@ -1710,8 +1769,20 @@ body {
   color: #666;
 }
 
+.photo-list-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .photo-list-delete {
   flex-shrink: 0;
+}
+
+.photo-list-download {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
 }
 
 /* Photo zoom modal */
@@ -1775,7 +1846,8 @@ body {
 
 /* Camera action panel icon */
 .action-panel-camera-icon {
-  width: 20px;
+  width: 24px;
+  font-size: 18px;
   text-align: center;
 }
 

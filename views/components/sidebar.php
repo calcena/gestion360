@@ -21,6 +21,9 @@
                 class="menu-icon-right">
             <div class="menu-text-option">Salir</div>
         </div>
+        <div class="sidebar-user-info">
+            <span class="sidebar-user-name"><?php echo htmlspecialchars($_SESSION['user']['nombre'] ?? 'Usuario'); ?></span>
+        </div>
     </div>
 </div>
 <!-- Overlay oscuro (opcional, mejora UX) -->

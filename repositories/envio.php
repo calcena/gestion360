@@ -162,6 +162,21 @@ function get_tarea($params)
     return $entity;
 }
 
+function get_envio_by_id($params)
+{
+    $db = conectar();
+    $stmt = $db->prepare("
+        SELECT e.*, p.nombre as prioridad_nombre,
+        (SELECT archivo FROM adjunto a2 WHERE a2.envio_id = e.id ORDER BY COALESCE(a2.version_timestamp, (strftime('%s', a2.registro) * 1000)) DESC, a2.registro DESC LIMIT 1) as adjunto
+        FROM envio e
+        LEFT JOIN prioridad p ON e.prioridad_id = p.id
+        WHERE e.id = ?
+    ");
+    $stmt->execute([$params["envio_id"]]);
+    $entity = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $entity;
+}
+
 
 
 function edit_envio($params)

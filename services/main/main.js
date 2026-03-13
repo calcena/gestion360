@@ -201,9 +201,13 @@ const parseTableHtml = async (data) => {
                 ${adjunto ? `<div class="text-end mt-1"><img class="attached-card attached-card-clickable" src="../assets/images/icons/pdf_envio.png" alt="PDF" onclick="viewAttachFile(event, '${adjunto}', '${cardId}')" /></div>` : ""}
             </div>
             <div class="task-card-footer flex-shrink-0">
-                <img class="task-icon" src="../assets/images/icons/${prioridadIcono}" alt="prioridad">
-                <span class="task-status-badge ${estadoColorBg} ${estadoColorText}">${estadoNombre}</span>
-                <div class="d-flex align-items-center ms-auto gap-2">
+                <div class="task-footer-left">
+                    <img class="task-icon task-priority-icon" src="../assets/images/icons/${prioridadIcono}" alt="prioridad">
+                </div>
+                <div class="task-footer-center">
+                    <span class="task-status-badge ${estadoColorBg} ${estadoColorText}">${estadoNombre}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
                     <div class="d-flex align-items-center gap-1 card-footer-action" onclick="openComments(event, ${cardId}, '${numEnvio}')">
                         <img class="task-icon task-comment-icon" src="../assets/images/icons/comment.png" alt="comentarios">
                         <span class="task-comment-count">${item.count_comentarios || 0}</span>
@@ -314,7 +318,29 @@ function showActionPanel(cardId, cardTitle, cardStatus, cardBgStatus) {
   overlay.style.display = "block";
   document.getElementById("menu_lateral_num_envio").innerText = cardTitle;
   document.getElementById("menu_lateral_estado").innerText = cardStatus;
+  document.getElementById("menu_lateral_estado").className = "badge";
   document.getElementById("menu_lateral_estado").classList.add(cardBgStatus);
+  
+  // Load additional envio data
+  loadEnvioData(cardId);
+}
+
+async function loadEnvioData(envioId) {
+  try {
+    const response = await axios.post("../api/envios/envio.php?getEnvioData", {
+      data: { envio_id: envioId }
+    });
+    
+    if (response.data.success && response.data.envio) {
+      const envio = response.data.envio;
+      document.getElementById("menu_lateral_emisor_id").value = envio.emisor_id || '';
+      document.getElementById("menu_lateral_descripcion").value = envio.descripcion || '';
+      document.getElementById("menu_lateral_prioridad_id").value = envio.prioridad_id || '';
+      document.getElementById("menu_lateral_adjunto").value = envio.adjunto || '';
+    }
+  } catch (error) {
+    console.error("Error loading envio data:", error);
+  }
 }
 
 function closeActionPanel() {
@@ -333,12 +359,16 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
   let pdfDoc = null, pageNum = 1, scale = 1.0;
   let canvas, ctx, overlayCanvas, overlayCtx;
   let isEditMode = false, isDrawing = false, currentTool = "pen";
-  let drawColor = "#2196f3", lineWidth = 3;
+  let drawColor = "#2196f3", baseLineWidth = 3;
   let lastX = 0, lastY = 0;
   let highlightStartX = 0, highlightStartY = 0;
   let highlightPoints = [];
   let savedCanvasData = null;
   const annotations = {}; // { pageNum: dataURL }
+
+  // Función para obtener el ancho de línea proporcional al zoom
+  const getLineWidth = () => baseLineWidth / scale;
+  const getHighlightThickness = () => (baseLineWidth * 3) / scale;
 
   const saveCurrentAnnotation = () => {
     if (overlayCanvas) {
@@ -348,8 +378,8 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
   };
 
   const redrawHighlight = () => {
-    overlayCtx.fillStyle = drawColor + '40';
-    const thickness = lineWidth * 3;
+    overlayCtx.fillStyle = drawColor.includes('40') ? drawColor : drawColor + '40';
+    const thickness = getHighlightThickness();
     for (let i = 0; i < highlightPoints.length - 1; i += 2) {
       const x1 = highlightPoints[i];
       const y1 = highlightPoints[i + 1];
@@ -380,6 +410,13 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
     overlayCanvas.height = viewport.height;
     overlayCanvas.width = viewport.width;
 
+    // Ajustar el wrapper para que tenga las dimensiones correctas
+    const wrapper = document.getElementById('canvas-wrapper');
+    if (wrapper) {
+      wrapper.style.width = viewport.width + 'px';
+      wrapper.style.height = viewport.height + 'px';
+    }
+
     await page.render({ canvasContext: ctx, viewport }).promise;
     document.getElementById("page_num").textContent = num;
 
@@ -409,7 +446,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         isDrawing = false;
         const text = prompt('Introduce el texto:');
         if (text) {
-          overlayCtx.font = `${lineWidth * 6}px Arial`;
+          overlayCtx.font = `${(baseLineWidth * 6) / scale}px Arial`;
           overlayCtx.fillStyle = drawColor;
           overlayCtx.fillText(text, lastX, lastY);
           saveCurrentAnnotation();
@@ -426,7 +463,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       const [x, y] = getPos(e);
       if (currentTool === 'eraser') {
         overlayCtx.globalCompositeOperation = 'destination-out';
-        overlayCtx.lineWidth = lineWidth * 5;
+        overlayCtx.lineWidth = (baseLineWidth * 5) / scale;
         overlayCtx.beginPath();
         overlayCtx.lineCap = 'round';
         overlayCtx.lineJoin = 'round';
@@ -441,7 +478,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         overlayCtx.globalCompositeOperation = 'source-over';
         overlayCtx.beginPath();
         overlayCtx.strokeStyle = drawColor;
-        overlayCtx.lineWidth = lineWidth;
+        overlayCtx.lineWidth = getLineWidth();
         overlayCtx.lineCap = 'round';
         overlayCtx.lineJoin = 'round';
         overlayCtx.moveTo(lastX, lastY);
@@ -595,7 +632,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       </div>
 
       <div id="pdf-container">
-        <div style="position:relative;">
+        <div id="canvas-wrapper" style="position:relative; display:inline-block;">
           <canvas id="pdf-canvas"></canvas>
           <canvas id="overlay-canvas" style="position:absolute; top:0; left:0; pointer-events:none;"></canvas>
         </div>
@@ -707,7 +744,6 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
               html += `<a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="${url}" target="_blank">`;
               html += `<div><strong>${displayDate}</strong></div>`;
               html += `<div>
-                        <button data-file="${r.archivo}" class="btn btn-sm btn-primary ms-2 download-version">Descargar</button>
                         <button data-file="${r.archivo}" class="btn btn-sm btn-outline-success ms-2 restore-version">Restaurar</button>
                        </div>`;
               html += `</a>`;
@@ -728,14 +764,6 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
                 const container = document.querySelector('.swal2-html-container');
                 if (!container) return;
                 container.addEventListener('click', async (ev) => {
-                  const btn = ev.target.closest('.download-version');
-                  if (btn) {
-                    const file = btn.getAttribute('data-file');
-                    if (!file) return;
-                    const url = '../attachments/' + encodeURIComponent(file);
-                    window.open(url, '_blank');
-                    return;
-                  }
                   const rbtn = ev.target.closest('.restore-version');
                   if (rbtn) {
                     ev.preventDefault();
@@ -789,16 +817,15 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
                 colorInput.value = '#2196f3';
                 break;
               case 'highlight':
-                drawColor = '#ffeb3b'; // Amarillo claro
+                drawColor = '#ffeb3b40'; // Amarillo claro con 25% transparencia
                 colorInput.value = '#ffeb3b';
-                lineWidth = 8; // El resaltador es más grueso
+                baseLineWidth = 20; // El resaltador es más grueso
                 break;
               case 'text':
                 drawColor = '#2196f3'; // Azul medio para texto
                 colorInput.value = '#2196f3';
                 break;
               case 'eraser':
-                // El borrador no usa color, pero mantenemos el azul como base
                 break;
             }
           }
@@ -819,6 +846,134 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       } catch (err) {
         console.error("Error PDF:", err);
       }
+    }
+  });
+};
+
+// Editar tarea desde el panel de acciones
+window.editarEnvio = async () => {
+  const envioId = parseInt(sessionStorage.getItem("envio_id"));
+  const numEnvio = sessionStorage.getItem("num_envio") || '';
+  const currentUserId = parseInt(sessionStorage.getItem("usuario_id"));
+  const emisorId = parseInt(document.getElementById("menu_lateral_emisor_id").value) || 0;
+  const descripcion = document.getElementById("menu_lateral_descripcion").value || '';
+  const prioridadId = parseInt(document.getElementById("menu_lateral_prioridad_id").value) || 0;
+  
+  // Verificar si es el propietario
+  const isOwner = emisorId === currentUserId;
+
+  // Obtener opciones de prioridad
+  let prioridadesOptions = `
+    <option value="1" ${prioridadId === 1 ? 'selected' : ''}>Urgente</option>
+    <option value="2" ${prioridadId === 2 ? 'selected' : ''}>Normal</option>
+    <option value="3" ${prioridadId === 3 ? 'selected' : ''}>Baja</option>
+  `;
+
+  // Get current adjunto
+  const adjuntoActual = document.getElementById("menu_lateral_adjunto").value || '';
+  
+  let pdfSection = '';
+  if (isOwner) {
+    if (adjuntoActual) {
+      pdfSection = `
+        <div class="mb-3">
+          <label class="form-label">Archivo PDF Actual</label>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary">${adjuntoActual}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAdjunto()">
+              <i class="fas fa-trash"></i> Eliminar
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">替换 archivo PDF</label>
+          <input type="file" id="edit-pdf-file" class="form-control" accept="application/pdf">
+          <small class="text-muted">Dejar vacío para mantener el archivo actual</small>
+        </div>
+      `;
+    } else {
+      pdfSection = `
+        <div class="mb-3">
+          <label class="form-label">Archivo PDF</label>
+          <input type="file" id="edit-pdf-file" class="form-control" accept="application/pdf">
+        </div>
+      `;
+    }
+  }
+
+  let pdfRemoved = false;
+  window.removeAdjunto = () => {
+    pdfRemoved = true;
+    document.querySelector('.swal2-content').querySelector('.mb-3').innerHTML = `
+      <label class="form-label">Archivo PDF</label>
+      <input type="file" id="edit-pdf-file" class="form-control" accept="application/pdf">
+      <small class="text-muted">Se eliminará el archivo al guardar</small>
+    `;
+  };
+
+  Swal.fire({
+    title: `Editar Tarea #${numEnvio}`,
+    html: `
+      <div class="text-start">
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <textarea id="edit-descripcion" class="form-control" rows="3">${descripcion}</textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Prioridad</label>
+          <select id="edit-prioridad" class="form-select">${prioridadesOptions}</select>
+        </div>
+        ${pdfSection}
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Guardar',
+    cancelButtonText: 'Cancelar',
+    preConfirm: async () => {
+      const newDescripcion = document.getElementById('edit-descripcion').value;
+      const newPrioridad = document.getElementById('edit-prioridad').value;
+      const pdfFile = document.getElementById('edit-pdf-file')?.files[0];
+
+      try {
+        // Primero actualizar descripción y prioridad
+        const updateResponse = await axios.post("../api/envios/envio.php?editEnvio", {
+          data: {
+            envio: envioId,
+            descripcion: newDescripcion,
+            prioridad_id: newPrioridad
+          }
+        });
+
+        if (!updateResponse.data.success) {
+          throw new Error(updateResponse.data.message || 'Error al actualizar');
+        }
+
+        // Si hay archivo PDF nuevo y es propietario, subirlo
+        if (pdfFile && isOwner) {
+          const formData = new FormData();
+          formData.append('pdf_file', pdfFile);
+          formData.append('envio_id', envioId);
+          
+          const uploadResponse = await axios.post('../api/attach/upload.php', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          
+          if (!uploadResponse.data.success) {
+            throw new Error(uploadResponse.data.message || 'Error al subir archivo');
+          }
+        }
+
+        await getListAllEnvios();
+        return true;
+      } catch (error) {
+        Swal.showValidationMessage(error.message);
+        return false;
+      }
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire('Actualizado', 'La tarea ha sido actualizada', 'success');
+      closeActionPanel();
     }
   });
 };
