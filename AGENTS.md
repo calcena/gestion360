@@ -90,3 +90,9 @@ The standard PDF.js viewer includes built-in annotation tools:
 - **Highlight tool**: Available in editor toolbar
 - **Default colors**: Blue (#2196f3) added as first option
 - **Enable**: Configured via `annotationEditorMode` option set to 4 (HIGHLIGHT)
+
+## CSS Guidelines
+- **NO inline styles**: All styles must be defined in `assets/css/style.css`
+- Use CSS classes instead of `style="..."` attributes
+- Follow existing naming conventions (e.g., `task-icon`, `task-comment-count`)
+- Group related styles by component section

@@ -69,6 +69,7 @@ function list_envios($params)
             p.nombre AS prioridad_nombre,
             p.icono AS prioridad_icono,
             (SELECT COUNT(id) FROM comentario WHERE envio_id = x.id AND activo = true) AS count_comentarios,
+            (SELECT COUNT(id) FROM foto WHERE envio_id = x.id AND activo = true) AS count_fotos,
             p.bg_class,
             (SELECT archivo FROM adjunto a2 WHERE a2.envio_id = x.id ORDER BY COALESCE(a2.version_timestamp, (strftime('%%s', a2.registro) * 1000)) DESC, a2.registro DESC LIMIT 1) as adjunto
         FROM

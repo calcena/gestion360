@@ -1546,3 +1546,49 @@ body {
 .comment-input-area {
   margin-bottom: 1rem;
 }
+
+/* Card footer action items (comments/photos) */
+.card-footer-action {
+  cursor: pointer;
+}
+
+.card-footer-action:hover {
+  opacity: 0.8;
+}
+
+.task-camera-icon {
+  font-size: 18px;
+  color: #555;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-comment-icon {
+  filter: brightness(0) saturate(100%) opacity(0.8);
+}
+
+.task-footer-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #ccc;
+  margin: 0 4px;
+}
+
+/* Hide elements (used for camera buttons) */
+.hidden-element {
+  display: none;
+}
+
+/* Camera action panel icon */
+.action-panel-camera-icon {
+  width: 20px;
+  text-align: center;
+}
+
+/* Card attached PDF clickable */
+.attached-card-clickable {
+  cursor: pointer;
+}

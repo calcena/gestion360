@@ -357,3 +357,24 @@ pdf_file name=91e32d9d-047f-419a-856d-92f73505bc5f.pdf.1773233741841.pdf size=54
 Processing file_name: 91e32d9d-047f-419a-856d-92f73505bc5f.pdf.1773233741841.pdf
 annotations_meta: {"1":{"length":89878,"preview":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABYYAAAfPCAYAAACE3jv5AAAQAElEQVR4Aezdv48kZ3of8KqjQi4FJYYBW8bu/QW2oUAGTsAxMpzrAIekM3Jl4A4QcM6Ozs5woAOkJZ0YpCMFusChHJGABEiRJMcGbsawDBhwIGuXoXTtenu6Z7p7+kdVd/"}}
 adjunto version inserted for envio_id=28 -> 91e32d9d-047f-419a-856d-92f73505bc5f.pdf.1773258864943.pdf, original=91e32d9d-047f-419a-856d-92f73505bc5f.pdf, ts=1773258864943
+[2026-03-13T09:55:24+00:00] save_pdf.php called
+POST keys: file_name,version_timestamp,envio_id,annotations_meta
+FILES keys: pdf_file
+pdf_file name=f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773150854880.pdf size=29018 tmp=/tmp/phpGMAU4v error=0
+Processing file_name: f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773150854880.pdf
+annotations_meta: {"1":{"length":77286,"preview":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAB0IAAAUmCAYAAAALMneAAAAQAElEQVR4AezZ25bbOLIEUK3z/x99xu12u266kALAzMCeNW1XSSSQsdNv8X83/yNAgAABAgQIECBAgAABAgTSBeQjQIAAAQIECBAgQIDAdgKK0O1WLvDtxoAAAQIECBAgQI"}}
+adjunto version inserted for envio_id=24 -> f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773395724021.pdf, original=f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf, ts=1773395724021
+[2026-03-13T09:56:13+00:00] save_pdf.php called
+POST keys: file_name,version_timestamp,envio_id,annotations_meta
+FILES keys: pdf_file
+pdf_file name=f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773395724021.pdf size=45069 tmp=/tmp/phpxQ55aA error=0
+Processing file_name: f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773395724021.pdf
+annotations_meta: {"1":{"length":95850,"preview":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACJEAAAYUCAYAAABUtgs3AAAQAElEQVR4AezdPZJcx5UF4MLsgda4WoB8ydCStJRZEg2OzwXIHYuLwBAEQXQ36uf9ZL7Me/JjqIHuqleZ93y3J0aKOBH8r5t/CBAgQIAAAQIECBAgQIAAgXQB+QgQIECAAA"}}
+adjunto version inserted for envio_id=24 -> f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773395773789.pdf, original=f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf, ts=1773395773789
+[2026-03-13T09:56:35+00:00] save_pdf.php called
+POST keys: file_name,version_timestamp,envio_id,annotations_meta
+FILES keys: pdf_file
+pdf_file name=f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773395773789.pdf size=57252 tmp=/tmp/phpXIDMoH error=0
+Processing file_name: f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773395773789.pdf
+annotations_meta: {"1":{"length":70106,"preview":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAB0IAAAUmCAYAAAALMneAAAAQAElEQVR4AezdzbEkSXYd4GzqMJSAAmBNYAEVqAcXFIUL6kEVuOBwTQEgAUaIRlfX1FS9n8wXGenuce/xbwzVXS8zwv2e75YBMDtj3f/p5j8ECBAgQIAAAQIECBAgQIBAuo"}}
+adjunto version inserted for envio_id=24 -> f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf.1773395795930.pdf, original=f6f37038-bf82-4d73-ac46-e11439f8c40d.pdf, ts=1773395795930

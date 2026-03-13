@@ -101,6 +101,9 @@ $_SESSION['base_path'] = dirname(__FILE__);
       <div class="action-panel-item" onclick="gotoComentarioEnvio()">
         <img class="me-2" src="../assets/images/icons/comment.png" width="20"> Comentarios
       </div>
+      <div class="action-panel-item" onclick="gotoFotoEnvio()">
+        <i class="fas fa-camera me-2 action-panel-camera-icon"></i> Fotos
+      </div>
       <hr class="my-1">
       <div id="estados" class="">
         <div class="status-option" onclick="changeStatus('pendiente')">

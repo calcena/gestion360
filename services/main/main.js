@@ -197,14 +197,20 @@ const parseTableHtml = async (data) => {
             </div>
             <div class="task-card-body card-body-detail flex-grow-1">
                 <p class="task-description mb-0">${tareaDescripcion}</p>
-                ${adjunto ? `<div class="text-end mt-1"><img class="attached-card" src="../assets/images/icons/pdf_envio.png" alt="PDF" style="cursor:pointer;" onclick="viewAttachFile(event, '${adjunto}', '${cardId}')" /></div>` : ""}
+                ${adjunto ? `<div class="text-end mt-1"><img class="attached-card attached-card-clickable" src="../assets/images/icons/pdf_envio.png" alt="PDF" onclick="viewAttachFile(event, '${adjunto}', '${cardId}')" /></div>` : ""}
             </div>
             <div class="task-card-footer flex-shrink-0">
                 <img class="task-icon" src="../assets/images/icons/${prioridadIcono}" alt="prioridad">
                 <span class="task-status-badge ${estadoColorBg} ${estadoColorText}">${estadoNombre}</span>
-                <div class="d-flex align-items-center ms-auto gap-1" style="cursor: pointer;" onclick="openComments('${cardId}', '${numEnvio}')">
-                    <img class="task-icon" src="../assets/images/icons/comment.png" alt="comentarios" style="opacity:.7;">
-                    <span class="task-comment-count">${item.count_comentarios || 0}</span>
+                <div class="d-flex align-items-center ms-auto gap-2">
+                    <div class="d-flex align-items-center gap-1 card-footer-action" onclick="openComments(event, ${cardId}, '${numEnvio}')">
+                        <img class="task-icon task-comment-icon" src="../assets/images/icons/comment.png" alt="comentarios">
+                        <span class="task-comment-count">${item.count_comentarios || 0}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 card-footer-action" onclick="openPhotos(event, ${cardId}, '${numEnvio}')">
+                        <i class="fas fa-camera task-camera-icon"></i>
+                        <span class="task-comment-count">${item.count_fotos || 0}</span>
+                    </div>
                 </div>
             </div>
         </div> `;
@@ -834,8 +840,13 @@ window.gotoComentarioEnvio = () => {
     Swal.fire('Error', 'No hay tarea seleccionada', 'error');
   }
 };
-window.openComments = (envioId, numEnvio) => {
+window.openComments = (event, envioId, numEnvio) => {
+  if (event) event.stopPropagation();
   window.location.href = `comentarios.php?envio_id=${envioId}&num_envio=${numEnvio}`;
+};
+window.openPhotos = (event, envioId, numEnvio) => {
+  if (event) event.stopPropagation();
+  window.location.href = `fotos.php?envio_id=${envioId}&num_envio=${numEnvio}`;
 };
 
 const eliminarEnvio = async () => {
