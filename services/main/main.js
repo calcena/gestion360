@@ -370,18 +370,21 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
   let highlightStartX = 0, highlightStartY = 0;
   let highlightPoints = [];
   let savedCanvasData = null;
-  const annotations = {}; // { pageNum: { dataURL, width, height } }
+  const annotations = {}; // { pageNum: { dataURL, width, height, scale, viewportWidth, viewportHeight, pdfPageWidth, pdfPageHeight } }
 
   // Función para obtener el ancho de línea proporcional al zoom
   const getLineWidth = () => baseLineWidth / scale;
   const getHighlightThickness = () => (baseLineWidth * 3) / scale;
 
   const saveCurrentAnnotation = () => {
-    if (overlayCanvas) {
+    if (overlayCanvas && pdfDoc) {
+      // Guardar la escala actual para usar al guardar el PDF
+      // Esto nos permite mantener la posición correcta independientemente del zoom
       annotations[pageNum] = {
         dataURL: overlayCanvas.toDataURL(),
         width: overlayCanvas.width,
-        height: overlayCanvas.height
+        height: overlayCanvas.height,
+        scale: scale
       };
       highlightPoints = [];
     }
@@ -531,27 +534,80 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       const pdfLibDoc = await PDFLib.PDFDocument.load(pdfBytes);
       const pages = pdfLibDoc.getPages();
 
-      // Guardar anotaciones usando las dimensiones originales (cuando se drew)
+      // Guardar anotaciones convirtiendo las coordenadas del canvas a coordenadas del PDF
       for (const [pageIndex, annotation] of Object.entries(annotations)) {
         const idx = parseInt(pageIndex) - 1;
         if (!pages[idx] || !annotation) continue;
 
-        const imgData = annotation.dataURL.split(',')[1];
-        const imgBytes = Uint8Array.from(atob(imgData), c => c.charCodeAt(0));
-        const pngImage = await pdfLibDoc.embedPng(imgBytes);
         const pdfPage = pages[idx];
         const { width: pdfWidth, height: pdfHeight } = pdfPage.getSize();
 
-        // Usar las dimensiones ORIGINALES de cuando se drew la anotación
-        // Esto garantiza que la posición sea exacta a donde el usuario escribió
-        const canvasWidth = annotation.width;
-        const canvasHeight = annotation.height;
+        // Crear un canvas temporal para analizar el contenido dibujado
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = annotation.width;
+        tempCanvas.height = annotation.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        const img = new Image();
+        
+        // Cargar la imagen de la anotación
+        await new Promise((resolve) => {
+          img.onload = () => {
+            tempCtx.drawImage(img, 0, 0);
+            resolve();
+          };
+          img.src = annotation.dataURL;
+        });
+        
+        // Encontrar el área dibujada (bounding box)
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        let minX = tempCanvas.width, minY = tempCanvas.height, maxX = 0, maxY = 0;
+        const data = imageData.data;
+        
+        for (let y = 0; y < tempCanvas.height; y++) {
+          for (let x = 0; x < tempCanvas.width; x++) {
+            const alpha = data[(y * tempCanvas.width + x) * 4 + 3];
+            if (alpha > 0) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        
+        // Si no hay contenido dibujado, omitir
+        if (minX >= maxX || minY >= maxY) continue;
+        
+        // Calcular dimensiones y posición del área dibujada
+        const drawWidth = maxX - minX;
+        const drawHeight = maxY - minY;
+        
+        // Escalar al tamaño del PDF usando la escala guardada
+        const scaleRatio = annotation.scale || 1;
+        const pdfDrawWidth = drawWidth / scaleRatio;
+        const pdfDrawHeight = drawHeight / scaleRatio;
+        const pdfDrawX = minX / scaleRatio;
+        const pdfDrawY = minY / scaleRatio;
+        
+        // Recortar la imagen al área dibujada
+        const croppedImageData = tempCtx.getImageData(minX, minY, drawWidth, drawHeight);
+        const croppedCanvas = document.createElement('canvas');
+        croppedCanvas.width = drawWidth;
+        croppedCanvas.height = drawHeight;
+        const croppedCtx = croppedCanvas.getContext('2d');
+        croppedCtx.putImageData(croppedImageData, 0, 0);
+        
+        const croppedDataUrl = croppedCanvas.toDataURL('image/png');
+        const croppedImgData = croppedDataUrl.split(',')[1];
+        const croppedImgBytes = Uint8Array.from(atob(croppedImgData), c => c.charCodeAt(0));
+        const croppedPngImage = await pdfLibDoc.embedPng(croppedImgBytes);
 
-        pdfPage.drawImage(pngImage, {
-          x: 0,
-          y: pdfHeight - canvasHeight,
-          width: canvasWidth,
-          height: canvasHeight
+        // Dibujar la imagen recortada en la posición correcta del PDF
+        pdfPage.drawImage(croppedPngImage, {
+          x: pdfDrawX,
+          y: pdfHeight - pdfDrawY - pdfDrawHeight,
+          width: pdfDrawWidth,
+          height: pdfDrawHeight
         });
       }
 
