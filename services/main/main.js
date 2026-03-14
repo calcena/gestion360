@@ -466,17 +466,9 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       if (!isEditMode) return;
       isDrawing = true;
       [lastX, lastY] = getPos(e);
-      if (currentTool === 'text') {
-        isDrawing = false;
-        const text = prompt('Introduce el texto:');
-        if (text) {
-          overlayCtx.font = `${(baseLineWidth * 6) / scale}px Arial`;
-          overlayCtx.fillStyle = drawColor;
-          overlayCtx.fillText(text, lastX, lastY);
-          saveCurrentAnnotation();
-        }
-      }
       if (currentTool === 'highlight') {
+        highlightStartX = lastX;
+        highlightStartY = lastY;
         highlightPoints = [lastX, lastY];
         savedCanvasData = overlayCtx.getImageData(0, 0, overlayCanvas.width, overlayCanvas.height);
       }
@@ -610,6 +602,31 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           height: pdfDrawHeight
         });
       }
+      
+      // Guardar firmas insertadas
+      if (annotation.signatureDataURL) {
+        const sigImg = new Image();
+        await new Promise((resolve) => {
+          sigImg.onload = resolve;
+          sigImg.src = annotation.signatureDataURL;
+        });
+        
+        const sigImgData = annotation.signatureDataURL.split(',')[1];
+        const sigImgBytes = Uint8Array.from(atob(sigImgData), c => c.charCodeAt(0));
+        const sigPngImage = await pdfLibDoc.embedPng(sigImgBytes);
+        
+        const pdfSigX = annotation.signatureX / scaleRatio;
+        const pdfSigY = annotation.signatureY / scaleRatio;
+        const pdfSigWidth = annotation.signatureWidth / scaleRatio;
+        const pdfSigHeight = annotation.signatureHeight / scaleRatio;
+        
+        pdfPage.drawImage(sigPngImage, {
+          x: pdfSigX,
+          y: pdfHeight - pdfSigY - pdfSigHeight,
+          width: pdfSigWidth,
+          height: pdfSigHeight
+        });
+      }
 
       const savedBytes = await pdfLibDoc.save();
       const blob = new Blob([savedBytes], { type: 'application/pdf' });
@@ -712,7 +729,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       <div id="edit-toolbar" class="mt-2 d-flex flex-wrap justify-content-center align-items-center gap-2" style="display:none !important;">
         <button id="tool_pen" class="btn btn-sm btn-dark active-tool"><i class="fas fa-pencil-alt"></i></button>
         <button id="tool_highlight" class="btn btn-sm btn-outline-dark"><i class="fas fa-highlighter"></i></button>
-        <button id="tool_text" class="btn btn-sm btn-outline-dark"><i class="fas fa-font"></i></button>
+        <button id="tool_sign" class="btn btn-sm btn-outline-primary"><i class="fas fa-signature"></i> Firmar</button>
         <button id="tool_eraser" class="btn btn-sm btn-outline-danger"><i class="fas fa-eraser"></i></button>
         <input type="color" id="draw_color" value="#2196f3" title="Color" style="width:36px;height:32px;padding:2px;border-radius:4px;cursor:pointer;">
         <select id="line_width" class="form-select form-select-sm" style="width:80px">
@@ -721,6 +738,16 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           <option value="8">Grueso</option>
         </select>
         <button id="btn_clear_page" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i> Limpiar</button>
+      </div>
+
+      <div id="signature-panel" class="mt-2 p-2 border rounded bg-light" style="display:none !important;">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <strong>Dibuja tu firma:</strong>
+          <button id="clear-signature" class="btn btn-outline-danger btn-sm">Limpiar</button>
+          <button id="accept-signature" class="btn btn-success btn-sm">Aceptar</button>
+          <button id="cancel-signature" class="btn btn-secondary btn-sm">Cancelar</button>
+        </div>
+        <canvas id="signature-canvas" style="border: 2px dashed #ccc; background: #fff; cursor: crosshair; width: 100%; height: 150px;"></canvas>
       </div>
 
       <div id="pdf-container">
@@ -909,42 +936,178 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         });
 
         // Tool buttons
+        let pendingSignature = null;
+        
         const setActiveTool = (tool) => {
           currentTool = tool;
-          ['tool_pen','tool_highlight','tool_text','tool_eraser'].forEach(id => {
+          ['tool_pen','tool_highlight','tool_sign','tool_eraser'].forEach(id => {
             const btn = document.getElementById(id);
             if (btn) {
               btn.classList.toggle('btn-dark', id === `tool_${tool}`);
               btn.classList.toggle('btn-outline-dark', id !== `tool_${tool}`);
+              btn.classList.toggle('btn-outline-primary', id === 'tool_sign' && tool === 'sign');
             }
           });
-          overlayCanvas.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
+          
+          if (tool === 'sign') {
+            overlayCanvas.style.pointerEvents = 'none';
+            showSignatureModal();
+          } else {
+            overlayCanvas.style.pointerEvents = 'none';
+            overlayCanvas.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
+          }
 
           // Cambiar color predefinido según la herramienta
           const colorInput = document.getElementById("draw_color");
           if (colorInput) {
             switch(tool) {
               case 'pen':
-                drawColor = '#0a2342'; // Azul oscuro
+                drawColor = '#0a2342';
                 colorInput.value = '#0a2342';
                 break;
               case 'highlight':
-                drawColor = '#ffeb3b20'; // Amarillo claro con ~12% transparencia (más transparente)
+                drawColor = '#ffeb3b20';
                 colorInput.value = '#ffeb3b';
-                baseLineWidth = 8; // El resaltador es más grueso
-                break;
-              case 'text':
-                drawColor = '#0a2342'; // Azul oscuro para texto
-                colorInput.value = '#0a2342';
+                baseLineWidth = 8;
                 break;
               case 'eraser':
                 break;
             }
           }
         };
+        
+        const showSignatureModal = () => {
+          const signaturePanel = document.getElementById('signature-panel');
+          const editToolbar = document.getElementById('edit-toolbar');
+          if (signaturePanel) signaturePanel.style.display = 'block';
+          if (editToolbar) editToolbar.style.display = 'none';
+          
+          const sigCanvas = document.getElementById('signature-canvas');
+          const sigCtx = sigCanvas.getContext('2d');
+          let isDrawing = false;
+          let lastX = 0, lastY = 0;
+          
+          sigCanvas.width = 600;
+          sigCanvas.height = 200;
+          sigCtx.strokeStyle = '#0a2342';
+          sigCtx.lineWidth = 3;
+          sigCtx.lineCap = 'round';
+          sigCtx.lineJoin = 'round';
+          
+          const getPos = (e) => {
+            const rect = sigCanvas.getBoundingClientRect();
+            const scaleX = sigCanvas.width / rect.width;
+            const scaleY = sigCanvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return [(clientX - rect.left) * scaleX, (clientY - rect.top) * scaleY];
+          };
+          
+          const startDraw = (e) => { e.preventDefault(); isDrawing = true; [lastX, lastY] = getPos(e); };
+          const draw = (e) => {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const [x, y] = getPos(e);
+            sigCtx.beginPath();
+            sigCtx.moveTo(lastX, lastY);
+            sigCtx.lineTo(x, y);
+            sigCtx.stroke();
+            [lastX, lastY] = [x, y];
+          };
+          const stopDraw = () => { isDrawing = false; };
+          
+          sigCanvas.addEventListener('mousedown', startDraw);
+          sigCanvas.addEventListener('mousemove', draw);
+          sigCanvas.addEventListener('mouseup', stopDraw);
+          sigCanvas.addEventListener('mouseleave', stopDraw);
+          sigCanvas.addEventListener('touchstart', startDraw, { passive: false });
+          sigCanvas.addEventListener('touchmove', draw, { passive: false });
+          sigCanvas.addEventListener('touchend', stopDraw);
+          
+          document.getElementById('clear-signature').onclick = () => {
+            sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+          };
+          
+          document.getElementById('accept-signature').onclick = () => {
+            const imageData = sigCtx.getImageData(0, 0, sigCanvas.width, sigCanvas.height);
+            let hasContent = false;
+            for (let i = 3; i < imageData.data.length; i += 4) {
+              if (imageData.data[i] > 0) { hasContent = true; break; }
+            }
+            if (!hasContent) { alert('Por favor, dibuja tu firma'); return; }
+            
+            pendingSignature = sigCanvas.toDataURL('image/png');
+            
+            if (signaturePanel) signaturePanel.style.display = 'none';
+            if (editToolbar) editToolbar.style.display = 'flex';
+            
+            overlayCanvas.style.pointerEvents = 'auto';
+            overlayCanvas.style.cursor = 'crosshair';
+            
+            const signBtn = document.getElementById('tool_sign');
+            if (signBtn) { signBtn.classList.remove('btn-outline-primary'); signBtn.classList.add('btn-primary'); }
+          };
+          
+          document.getElementById('cancel-signature').onclick = () => {
+            if (signaturePanel) signaturePanel.style.display = 'none';
+            if (editToolbar) editToolbar.style.display = 'flex';
+            setActiveTool('pen');
+          };
+        };
+        
+        // Click handler for signature placement
+        overlayCanvas.addEventListener('click', function placeSignature(e) {
+          if (!pendingSignature || currentTool !== 'sign') return;
+          
+          overlayCanvas.style.pointerEvents = 'none';
+          
+          const rect = overlayCanvas.getBoundingClientRect();
+          const scaleX = overlayCanvas.width / rect.width;
+          const scaleY = overlayCanvas.height / rect.height;
+          const x = (e.clientX - rect.left) * scaleX;
+          const y = (e.clientY - rect.top) * scaleY;
+          
+          const sigImg = new Image();
+          sigImg.onload = function() {
+            const sigWidth = 150 * scale;
+            const sigHeight = Math.round((sigImg.height / sigImg.width) * sigWidth);
+            const sigCanvas = document.createElement('canvas');
+            sigCanvas.width = sigWidth;
+            sigCanvas.height = sigHeight;
+            const sigCtx = sigCanvas.getContext('2d');
+            sigCtx.drawImage(sigImg, 0, 0, sigWidth, sigHeight);
+            
+            annotations[pageNum] = {
+              dataURL: overlayCanvas.toDataURL(),
+              width: overlayCanvas.width,
+              height: overlayCanvas.height,
+              scale: scale
+            };
+            
+            const sigX = x - sigWidth / 2;
+            const sigY = y - sigHeight / 2;
+            overlayCtx.drawImage(sigCanvas, sigX, sigY);
+            
+            annotations[pageNum].signatureDataURL = sigCanvas.toDataURL('image/png');
+            annotations[pageNum].signatureX = sigX;
+            annotations[pageNum].signatureY = sigY;
+            annotations[pageNum].signatureWidth = sigWidth;
+            annotations[pageNum].signatureHeight = sigHeight;
+            
+            pendingSignature = null;
+            
+            const signBtn = document.getElementById('tool_sign');
+            if (signBtn) { signBtn.classList.remove('btn-primary'); signBtn.classList.add('btn-outline-primary'); }
+            
+            setActiveTool('pen');
+            saveCurrentAnnotation();
+          };
+          sigImg.src = pendingSignature;
+        });
+        
         document.getElementById("tool_pen").addEventListener("click", () => setActiveTool('pen'));
         document.getElementById("tool_highlight").addEventListener("click", () => setActiveTool('highlight'));
-        document.getElementById("tool_text").addEventListener("click", () => setActiveTool('text'));
+        document.getElementById("tool_sign").addEventListener("click", () => setActiveTool('sign'));
         document.getElementById("tool_eraser").addEventListener("click", () => setActiveTool('eraser'));
 
         document.getElementById("draw_color").addEventListener("input", (e) => { drawColor = e.target.value; });
