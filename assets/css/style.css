@@ -1228,25 +1228,28 @@
 /* Mobile adjustments for version modal */
 @media (max-width: 767px) {
   .versiones-modal .list-group-item {
-    flex-direction: column !important;
-    align-items: flex-start !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
   }
 
   .versiones-modal .list-group-item > div:first-child {
     text-align: left !important;
-    width: 100% !important;
-    margin-bottom: 0.5rem !important;
+    flex: 1 1 auto !important;
+    white-space: nowrap !important;
+    margin-bottom: 0 !important;
+    margin-right: 0.5rem !important;
   }
 
   .versiones-modal .list-group-item > div:last-child {
-    width: 100% !important;
+    flex: 0 0 auto !important;
     justify-content: flex-end !important;
   }
 
   .versiones-modal .btn-sm {
-    font-size: 0.9rem !important;
-    padding: 0.5rem 1rem !important;
-    min-width: 90px !important;
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    white-space: nowrap !important;
   }
 }
 
@@ -1707,6 +1710,7 @@ body {
   gap: 10px;
   margin-top: 10px;
   flex-wrap: wrap;
+  justify-items: center;
 }
 
 .photo-preview {

@@ -32,10 +32,20 @@ if (!$envio_id) {
 
 try {
     $db = conectar();
-    $stmt = $db->prepare('SELECT id, registro, archivo, version_timestamp FROM adjunto WHERE envio_id = ? ORDER BY COALESCE(version_timestamp, (strftime(\'%s\', registro) * 1000)) DESC, registro DESC');
+    $stmt = $db->prepare('SELECT id, registro, archivo, version_timestamp, uuid_original FROM adjunto WHERE envio_id = ? ORDER BY COALESCE(version_timestamp, (strftime(\'%s\', registro) * 1000)) DESC, registro DESC');
     $stmt->execute([$envio_id]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    echo json_encode(['success' => true, 'data' => $rows]);
+    
+    // Filtrar: excluir el archivo actual (el más reciente sin version_timestamp o cuyo archivo no tiene timestamp)
+    $filtered = [];
+    foreach ($rows as $row) {
+        // Solo incluir versiones con timestamp (archivos con formato .timestamp.pdf)
+        if (!empty($row['version_timestamp']) && preg_match('/\.\d+\.pdf$/i', $row['archivo'])) {
+            $filtered[] = $row;
+        }
+    }
+    
+    echo json_encode(['success' => true, 'data' => $filtered]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);

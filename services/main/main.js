@@ -1,3 +1,4 @@
+console.log('main.js loaded');
 let currentCardId = null;
 let actionPanel = null;
 let closePanelBtn = null;
@@ -320,7 +321,7 @@ function showActionPanel(cardId, cardTitle, cardStatus, cardBgStatus) {
   document.getElementById("menu_lateral_estado").innerText = cardStatus;
   document.getElementById("menu_lateral_estado").className = "badge";
   document.getElementById("menu_lateral_estado").classList.add(cardBgStatus);
-  
+
   // Load additional envio data
   loadEnvioData(cardId);
 }
@@ -330,7 +331,7 @@ async function loadEnvioData(envioId) {
     const response = await axios.post("../api/envios/envio.php?getEnvioData", {
       data: { envio_id: envioId }
     });
-    
+
     if (response.data.success && response.data.envio) {
       const envio = response.data.envio;
       document.getElementById("menu_lateral_emisor_id").value = envio.emisor_id || '';
@@ -352,6 +353,11 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
   event.stopPropagation();
   if (envioIdFromCard) sessionStorage.setItem("envio_id", envioIdFromCard);
 
+  // Obtener el nombre actual del archivo desde el input hidden (para obtener la versión más reciente tras restaurar)
+  const menuAdjunto = document.getElementById("menu_lateral_adjunto");
+  const currentAdjunto = menuAdjunto ? menuAdjunto.value : pdfUrl;
+  const pdfUrlToUse = currentAdjunto || pdfUrl;
+
   const pdfjsLib = window["pdfjs-dist/build/pdf"];
   pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
@@ -359,12 +365,12 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
   let pdfDoc = null, pageNum = 1, scale = 1.0;
   let canvas, ctx, overlayCanvas, overlayCtx;
   let isEditMode = false, isDrawing = false, currentTool = "pen";
-  let drawColor = "#2196f3", baseLineWidth = 3;
+  let drawColor = "#0a2342", baseLineWidth = 1.5;
   let lastX = 0, lastY = 0;
   let highlightStartX = 0, highlightStartY = 0;
   let highlightPoints = [];
   let savedCanvasData = null;
-  const annotations = {}; // { pageNum: dataURL }
+  const annotations = {}; // { pageNum: { dataURL, width, height } }
 
   // Función para obtener el ancho de línea proporcional al zoom
   const getLineWidth = () => baseLineWidth / scale;
@@ -372,13 +378,17 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
 
   const saveCurrentAnnotation = () => {
     if (overlayCanvas) {
-      annotations[pageNum] = overlayCanvas.toDataURL();
+      annotations[pageNum] = {
+        dataURL: overlayCanvas.toDataURL(),
+        width: overlayCanvas.width,
+        height: overlayCanvas.height
+      };
       highlightPoints = [];
     }
   };
 
   const redrawHighlight = () => {
-    overlayCtx.fillStyle = drawColor.includes('40') ? drawColor : drawColor + '40';
+    overlayCtx.fillStyle = drawColor.includes('40') || drawColor.includes('20') ? drawColor : drawColor + '40';
     const thickness = getHighlightThickness();
     for (let i = 0; i < highlightPoints.length - 1; i += 2) {
       const x1 = highlightPoints[i];
@@ -420,11 +430,22 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
     await page.render({ canvasContext: ctx, viewport }).promise;
     document.getElementById("page_num").textContent = num;
 
-    // Redibujar anotaciones de esta página
+    // Redibujar anotaciones de esta página usando las dimensiones originales
     if (annotations[num]) {
       const img = new Image();
-      img.onload = () => overlayCtx.drawImage(img, 0, 0);
-      img.src = annotations[num];
+      img.onload = () => {
+        // Crear un canvas temporal para redimensionar la imagen a su tamaño original
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = annotations[num].width;
+        tempCanvas.height = annotations[num].height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(img, 0, 0);
+
+        // Limpiar y redibujar en el overlay con las dimensiones correctas
+        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        overlayCtx.drawImage(tempCanvas, 0, 0);
+      };
+      img.src = annotations[num].dataURL;
     }
   };
 
@@ -510,15 +531,28 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       const pdfLibDoc = await PDFLib.PDFDocument.load(pdfBytes);
       const pages = pdfLibDoc.getPages();
 
-      for (const [pageIndex, dataUrl] of Object.entries(annotations)) {
+      // Guardar anotaciones usando las dimensiones originales (cuando se drew)
+      for (const [pageIndex, annotation] of Object.entries(annotations)) {
         const idx = parseInt(pageIndex) - 1;
-        if (!pages[idx]) continue;
-        const imgData = dataUrl.split(',')[1];
+        if (!pages[idx] || !annotation) continue;
+
+        const imgData = annotation.dataURL.split(',')[1];
         const imgBytes = Uint8Array.from(atob(imgData), c => c.charCodeAt(0));
         const pngImage = await pdfLibDoc.embedPng(imgBytes);
         const pdfPage = pages[idx];
-        const { width, height } = pdfPage.getSize();
-        pdfPage.drawImage(pngImage, { x: 0, y: 0, width, height });
+        const { width: pdfWidth, height: pdfHeight } = pdfPage.getSize();
+
+        // Usar las dimensiones ORIGINALES de cuando se drew la anotación
+        // Esto garantiza que la posición sea exacta a donde el usuario escribió
+        const canvasWidth = annotation.width;
+        const canvasHeight = annotation.height;
+
+        pdfPage.drawImage(pngImage, {
+          x: 0,
+          y: pdfHeight - canvasHeight,
+          width: canvasWidth,
+          height: canvasHeight
+        });
       }
 
       const savedBytes = await pdfLibDoc.save();
@@ -540,10 +574,12 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
 
       try {
         const annotationsMeta = {};
-        for (const [p, dataUrl] of Object.entries(annotations)) {
+        for (const [p, annotation] of Object.entries(annotations)) {
           annotationsMeta[p] = {
-            length: dataUrl ? dataUrl.length : 0,
-            preview: dataUrl ? dataUrl.slice(0, 200) : null
+            length: annotation && annotation.dataURL ? annotation.dataURL.length : 0,
+            preview: annotation && annotation.dataURL ? annotation.dataURL.slice(0, 200) : null,
+            width: annotation ? annotation.width : 0,
+            height: annotation ? annotation.height : 0
           };
         }
         formData.append('annotations_meta', JSON.stringify(annotationsMeta));
@@ -652,13 +688,26 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       overlayCtx = overlayCanvas.getContext("2d");
 
       try {
-        pdfDoc = await pdfjsLib.getDocument(`../attachments/${pdfUrl}`).promise;
+        const cacheBuster = Date.now();
+        pdfDoc = await pdfjsLib.getDocument(`../attachments/${pdfUrlToUse}?v=${cacheBuster}`).promise;
         document.getElementById("page_count").textContent = pdfDoc.numPages;
         await renderPage(pageNum);
 
         // Eventos de Navegación
-        document.getElementById("prev").onclick = () => { if (pageNum > 1) { annotations[pageNum] = overlayCanvas.toDataURL(); pageNum--; renderPage(pageNum); } };
-        document.getElementById("next").onclick = () => { if (pageNum < pdfDoc.numPages) { annotations[pageNum] = overlayCanvas.toDataURL(); pageNum++; renderPage(pageNum); } };
+        document.getElementById("prev").onclick = () => {
+          if (pageNum > 1) {
+            annotations[pageNum] = { dataURL: overlayCanvas.toDataURL(), width: overlayCanvas.width, height: overlayCanvas.height };
+            pageNum--;
+            renderPage(pageNum);
+          }
+        };
+        document.getElementById("next").onclick = () => {
+          if (pageNum < pdfDoc.numPages) {
+            annotations[pageNum] = { dataURL: overlayCanvas.toDataURL(), width: overlayCanvas.width, height: overlayCanvas.height };
+            pageNum++;
+            renderPage(pageNum);
+          }
+        };
 
         // Zoom
         document.getElementById("zoom_in").onclick = () => { scale += 0.2; renderPage(pageNum); };
@@ -741,17 +790,17 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
                 displayDate = 'Sin fecha';
               }
 
-              html += `<a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="${url}" target="_blank">`;
-              html += `<div><strong>${displayDate}</strong></div>`;
-              html += `<div>
-                        <button data-file="${r.archivo}" class="btn btn-sm btn-outline-success ms-2 restore-version">Restaurar</button>
+              html += `<a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center flex-nowrap" href="${url}" target="_blank">`;
+              html += `<div class="text-truncate" style="max-width: 70%;"><strong>${displayDate}</strong></div>`;
+              html += `<div class="flex-shrink-0">
+                        <button data-file="${r.archivo}" class="btn btn-sm btn-outline-success restore-version">Restaurar</button>
                        </div>`;
               html += `</a>`;
             }
             html += '</div>';
             // Show the modal and attach handlers for download/restore buttons
             Swal.fire({
-              title: 'Versiones del adjunto',
+              title: 'Versiones',
               html,
               width: '90%',
               showConfirmButton: false,
@@ -778,6 +827,13 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
                       if (resp.data && resp.data.success) {
                         Swal.fire({ icon: 'success', title: 'Restaurado', text: 'La versión ha sido restaurada correctamente', toast: true, position: 'top-end', timer: 2000 });
                         try { if (typeof getListAllEnvios === 'function') getListAllEnvios(); } catch(e){ console.warn('refresh list failed', e); }
+                        // Actualizar el input hidden con el archivo restaurado
+                        const menuAdjunto = document.getElementById("menu_lateral_adjunto");
+                        if (menuAdjunto) {
+                          // Extraer el nombre base sin timestamp
+                          const baseName = file.replace(/\.\d+\.pdf$/i, '').replace(/\.pdf$/i, '') + '.pdf';
+                          menuAdjunto.value = baseName;
+                        }
                       } else {
                         Swal.fire('Error', resp.data.message || 'No se pudo restaurar', 'error');
                       }
@@ -813,17 +869,17 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           if (colorInput) {
             switch(tool) {
               case 'pen':
-                drawColor = '#2196f3'; // Azul medio
-                colorInput.value = '#2196f3';
+                drawColor = '#0a2342'; // Azul oscuro
+                colorInput.value = '#0a2342';
                 break;
               case 'highlight':
-                drawColor = '#ffeb3b40'; // Amarillo claro con 25% transparencia
+                drawColor = '#ffeb3b20'; // Amarillo claro con ~12% transparencia (más transparente)
                 colorInput.value = '#ffeb3b';
-                baseLineWidth = 20; // El resaltador es más grueso
+                baseLineWidth = 8; // El resaltador es más grueso
                 break;
               case 'text':
-                drawColor = '#2196f3'; // Azul medio para texto
-                colorInput.value = '#2196f3';
+                drawColor = '#0a2342'; // Azul oscuro para texto
+                colorInput.value = '#0a2342';
                 break;
               case 'eraser':
                 break;
@@ -851,14 +907,15 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
 };
 
 // Editar tarea desde el panel de acciones
-window.editarEnvio = async () => {
+async function editarEnvio() {
+  console.log('editarEnvio called!');
   const envioId = parseInt(sessionStorage.getItem("envio_id"));
   const numEnvio = sessionStorage.getItem("num_envio") || '';
   const currentUserId = parseInt(sessionStorage.getItem("usuario_id"));
   const emisorId = parseInt(document.getElementById("menu_lateral_emisor_id").value) || 0;
   const descripcion = document.getElementById("menu_lateral_descripcion").value || '';
   const prioridadId = parseInt(document.getElementById("menu_lateral_prioridad_id").value) || 0;
-  
+
   // Verificar si es el propietario
   const isOwner = emisorId === currentUserId;
 
@@ -871,7 +928,7 @@ window.editarEnvio = async () => {
 
   // Get current adjunto
   const adjuntoActual = document.getElementById("menu_lateral_adjunto").value || '';
-  
+
   let pdfSection = '';
   if (isOwner) {
     if (adjuntoActual) {
@@ -953,11 +1010,11 @@ window.editarEnvio = async () => {
           const formData = new FormData();
           formData.append('pdf_file', pdfFile);
           formData.append('envio_id', envioId);
-          
+
           const uploadResponse = await axios.post('../api/attach/upload.php', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
-          
+
           if (!uploadResponse.data.success) {
             throw new Error(uploadResponse.data.message || 'Error al subir archivo');
           }
@@ -1023,10 +1080,22 @@ const eliminarEnvio = async () => {
     if (response.data.success) {
       window.location.href = "./main.php";
     }
-  } catch (error) {
+  } catch (err) {
     console.error("error");
   }
 };
+window.eliminarEnvio = eliminarEnvio;
+
+const gotoFotoEnvio = () => {
+  const envioId = parseInt(sessionStorage.getItem("envio_id"));
+  const numEnvio = sessionStorage.getItem("num_envio") || '';
+  if (envioId && !isNaN(envioId)) {
+    window.location.href = `fotos.php?envio_id=${envioId}&num_envio=${numEnvio}`;
+  } else {
+    Swal.fire('Error', 'No hay tarea seleccionada', 'error');
+  }
+};
+window.gotoFotoEnvio = gotoFotoEnvio;
 
 const changeStatus = async (status) => {
   const data = {
@@ -1062,6 +1131,7 @@ const changeStatus = async (status) => {
     console.error("error");
   }
 };
+window.changeStatus = changeStatus;
 
 const checkFinalizado = () => {
   let filtrosRaw = sessionStorage.getItem("filtro_estados") || "1,2";
