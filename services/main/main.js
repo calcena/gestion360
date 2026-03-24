@@ -367,46 +367,42 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
   let isEditMode = false, isDrawing = false, currentTool = "pen";
   let drawColor = "#0a2342", baseLineWidth = 1.5;
   let lastX = 0, lastY = 0;
-  let highlightStartX = 0, highlightStartY = 0;
-  let highlightPoints = [];
+  let highlightRect = null; // { x1, y1, x2, y2 }
   let savedCanvasData = null;
   const annotations = {}; // { pageNum: { dataURL, width, height, scale, viewportWidth, viewportHeight, pdfPageWidth, pdfPageHeight } }
 
   // Función para obtener el ancho de línea proporcional al zoom
   const getLineWidth = () => baseLineWidth / scale;
-  const getHighlightThickness = () => (baseLineWidth * 3) / scale;
 
   const saveCurrentAnnotation = () => {
     if (overlayCanvas && pdfDoc) {
-      // Guardar la escala actual para usar al guardar el PDF
-      // Esto nos permite mantener la posición correcta independientemente del zoom
       annotations[pageNum] = {
         dataURL: overlayCanvas.toDataURL(),
         width: overlayCanvas.width,
         height: overlayCanvas.height,
         scale: scale
       };
-      highlightPoints = [];
+      highlightRect = null;
     }
   };
 
   const redrawHighlight = () => {
+    if (!highlightRect) return;
+    overlayCtx.globalCompositeOperation = 'source-over';
     overlayCtx.fillStyle = drawColor.includes('40') || drawColor.includes('20') ? drawColor : drawColor + '40';
-    const thickness = getHighlightThickness();
-    for (let i = 0; i < highlightPoints.length - 1; i += 2) {
-      const x1 = highlightPoints[i];
-      const y1 = highlightPoints[i + 1];
-      const x2 = highlightPoints[i + 2];
-      const y2 = highlightPoints[i + 3];
-      const minX = Math.min(x1, x2) - thickness;
-      const minY = Math.min(y1, y2) - thickness;
-      const w = Math.abs(x2 - x1) + thickness * 2;
-      const h = Math.abs(y2 - y1) + thickness * 2;
-      overlayCtx.fillRect(minX, minY, w, h);
-    }
+    const x = Math.min(highlightRect.x1, highlightRect.x2);
+    const y = Math.min(highlightRect.y1, highlightRect.y2);
+    const w = Math.abs(highlightRect.x2 - highlightRect.x1);
+    const h = Math.abs(highlightRect.y2 - highlightRect.y1);
+    overlayCtx.fillRect(x, y, w, h);
   };
 
   // Función de renderizado ajustada
+  const updateZoomDisplay = () => {
+    const zoomBtn = document.getElementById('zoom_reset');
+    if (zoomBtn) zoomBtn.textContent = Math.round(scale * 100) + '%';
+  };
+
   const renderPage = async (num) => {
     const page = await pdfDoc.getPage(num);
 
@@ -414,8 +410,10 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
     if (pageNum === 1 && scale === 1.0) {
         const containerWidth = document.getElementById('pdf-container').clientWidth;
         const unscaledViewport = page.getViewport({ scale: 1 });
-        scale = (containerWidth - 40) / unscaledViewport.width;
+        scale = containerWidth / unscaledViewport.width;
     }
+
+    updateZoomDisplay();
 
     const viewport = page.getViewport({ scale });
     canvas.height = viewport.height;
@@ -449,6 +447,8 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         overlayCtx.drawImage(tempCanvas, 0, 0);
       };
       img.src = annotations[num].dataURL;
+    } else {
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
     }
   };
 
@@ -467,9 +467,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
       isDrawing = true;
       [lastX, lastY] = getPos(e);
       if (currentTool === 'highlight') {
-        highlightStartX = lastX;
-        highlightStartY = lastY;
-        highlightPoints = [lastX, lastY];
+        highlightRect = { x1: lastX, y1: lastY, x2: lastX, y2: lastY };
         savedCanvasData = overlayCtx.getImageData(0, 0, overlayCanvas.width, overlayCanvas.height);
       }
     });
@@ -487,7 +485,8 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         overlayCtx.lineTo(x, y);
         overlayCtx.stroke();
       } else if (currentTool === 'highlight') {
-        highlightPoints.push(x, y);
+        highlightRect.x2 = x;
+        highlightRect.y2 = y;
         overlayCtx.putImageData(savedCanvasData, 0, 0);
         redrawHighlight();
       } else {
@@ -512,9 +511,20 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
     };
     overlayCanvas.addEventListener('mouseup', stopDraw);
     overlayCanvas.addEventListener('mouseleave', stopDraw);
-    overlayCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); overlayCanvas.dispatchEvent(new MouseEvent('mousedown', { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY })); }, { passive: false });
-    overlayCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); overlayCanvas.dispatchEvent(new MouseEvent('mousemove', { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY })); }, { passive: false });
-    overlayCanvas.addEventListener('touchend', stopDraw);
+    overlayCanvas.addEventListener('touchstart', (e) => {
+      if (currentTool === 'sign') return;
+      e.preventDefault();
+      overlayCanvas.dispatchEvent(new MouseEvent('mousedown', { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }));
+    }, { passive: false });
+    overlayCanvas.addEventListener('touchmove', (e) => {
+      if (currentTool === 'sign') return;
+      e.preventDefault();
+      overlayCanvas.dispatchEvent(new MouseEvent('mousemove', { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }));
+    }, { passive: false });
+    overlayCanvas.addEventListener('touchend', (e) => {
+      if (currentTool === 'sign') return;
+      stopDraw();
+    });
   };
 
   const savePdfWithAnnotations = async () => {
@@ -569,66 +579,64 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
         
         // Si no hay contenido dibujado, omitir
         if (minX >= maxX || minY >= maxY) continue;
-        
-        // Calcular dimensiones y posición del área dibujada
-        const drawWidth = maxX - minX;
-        const drawHeight = maxY - minY;
-        
-        // Escalar al tamaño del PDF usando la escala guardada
+
+        // Escalar la anotación a resolución PDF (escala 1.0) para mantener calidad
         const scaleRatio = annotation.scale || 1;
-        const pdfDrawWidth = drawWidth / scaleRatio;
-        const pdfDrawHeight = drawHeight / scaleRatio;
-        const pdfDrawX = minX / scaleRatio;
-        const pdfDrawY = minY / scaleRatio;
-        
-        // Recortar la imagen al área dibujada
-        const croppedImageData = tempCtx.getImageData(minX, minY, drawWidth, drawHeight);
-        const croppedCanvas = document.createElement('canvas');
-        croppedCanvas.width = drawWidth;
-        croppedCanvas.height = drawHeight;
-        const croppedCtx = croppedCanvas.getContext('2d');
-        croppedCtx.putImageData(croppedImageData, 0, 0);
-        
-        const croppedDataUrl = croppedCanvas.toDataURL('image/png');
+        const pdfMinX = minX / scaleRatio;
+        const pdfMinY = minY / scaleRatio;
+        const pdfDrawWidth = (maxX - minX) / scaleRatio;
+        const pdfDrawHeight = (maxY - minY) / scaleRatio;
+
+        // Crear canvas a resolución PDF (1:1 con las unidades del PDF)
+        const scaledCanvas = document.createElement('canvas');
+        scaledCanvas.width = Math.round(pdfDrawWidth);
+        scaledCanvas.height = Math.round(pdfDrawHeight);
+        const scaledCtx = scaledCanvas.getContext('2d');
+        scaledCtx.drawImage(tempCanvas,
+          minX, minY, maxX - minX, maxY - minY,
+          0, 0, scaledCanvas.width, scaledCanvas.height
+        );
+
+        const croppedDataUrl = scaledCanvas.toDataURL('image/png');
         const croppedImgData = croppedDataUrl.split(',')[1];
         const croppedImgBytes = Uint8Array.from(atob(croppedImgData), c => c.charCodeAt(0));
         const croppedPngImage = await pdfLibDoc.embedPng(croppedImgBytes);
 
-        // Dibujar la imagen recortada en la posición correcta del PDF
+        // Dibujar la imagen en la posición correcta del PDF
         pdfPage.drawImage(croppedPngImage, {
-          x: pdfDrawX,
-          y: pdfHeight - pdfDrawY - pdfDrawHeight,
+          x: pdfMinX,
+          y: pdfHeight - pdfMinY - pdfDrawHeight,
           width: pdfDrawWidth,
           height: pdfDrawHeight
         });
-      }
-      
-      // Guardar firmas insertadas
-      if (annotation.signatureDataURL) {
-        const sigImg = new Image();
-        await new Promise((resolve) => {
-          sigImg.onload = resolve;
-          sigImg.src = annotation.signatureDataURL;
-        });
-        
-        const sigImgData = annotation.signatureDataURL.split(',')[1];
-        const sigImgBytes = Uint8Array.from(atob(sigImgData), c => c.charCodeAt(0));
-        const sigPngImage = await pdfLibDoc.embedPng(sigImgBytes);
-        
-        const pdfSigX = annotation.signatureX / scaleRatio;
-        const pdfSigY = annotation.signatureY / scaleRatio;
-        const pdfSigWidth = annotation.signatureWidth / scaleRatio;
-        const pdfSigHeight = annotation.signatureHeight / scaleRatio;
-        
-        pdfPage.drawImage(sigPngImage, {
-          x: pdfSigX,
-          y: pdfHeight - pdfSigY - pdfSigHeight,
-          width: pdfSigWidth,
-          height: pdfSigHeight
-        });
+
+        // Guardar firmas insertadas en esta página
+        if (annotation.signatureDataURL) {
+          const sigImg = new Image();
+          await new Promise((resolve) => {
+            sigImg.onload = resolve;
+            sigImg.src = annotation.signatureDataURL;
+          });
+          
+          const sigImgData = annotation.signatureDataURL.split(',')[1];
+          const sigImgBytes = Uint8Array.from(atob(sigImgData), c => c.charCodeAt(0));
+          const sigPngImage = await pdfLibDoc.embedPng(sigImgBytes);
+          
+          const pdfSigX = annotation.signatureX / scaleRatio;
+          const pdfSigY = annotation.signatureY / scaleRatio;
+          const pdfSigWidth = annotation.signatureWidth / scaleRatio;
+          const pdfSigHeight = annotation.signatureHeight / scaleRatio;
+          
+          pdfPage.drawImage(sigPngImage, {
+            x: pdfSigX,
+            y: pdfHeight - pdfSigY - pdfSigHeight,
+            width: pdfSigWidth,
+            height: pdfSigHeight
+          });
+        }
       }
 
-      const savedBytes = await pdfLibDoc.save();
+      const savedBytes = await pdfLibDoc.save({ useObjectStreams: false });
       const blob = new Blob([savedBytes], { type: 'application/pdf' });
 
       const now = new Date();
@@ -811,8 +819,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
             btn.classList.add('btn-warning');
             editBar.style.display = 'flex';
             saveBtn.style.display = 'inline-block';
-            overlayCanvas.style.pointerEvents = 'auto';
-            overlayCanvas.style.cursor = 'crosshair';
+            setActiveTool('pen');
           } else {
             btn.classList.remove('btn-warning');
             btn.classList.add('btn-success');
@@ -950,12 +957,12 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           });
           
           if (tool === 'sign') {
-            overlayCanvas.style.pointerEvents = 'none';
+            overlayCanvas.style.cursor = 'crosshair';
             showSignatureModal();
           } else {
-            overlayCanvas.style.pointerEvents = 'none';
             overlayCanvas.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
           }
+          overlayCanvas.style.pointerEvents = 'auto';
 
           // Cambiar color predefinido según la herramienta
           const colorInput = document.getElementById("draw_color");
@@ -966,9 +973,8 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
                 colorInput.value = '#0a2342';
                 break;
               case 'highlight':
-                drawColor = '#ffeb3b20';
+                drawColor = '#ffeb3b40';
                 colorInput.value = '#ffeb3b';
-                baseLineWidth = 8;
                 break;
               case 'eraser':
                 break;
@@ -1041,6 +1047,7 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
             if (signaturePanel) signaturePanel.style.display = 'none';
             if (editToolbar) editToolbar.style.display = 'flex';
             
+            // Dejar pointerEvents activo para poder hacer clic en el PDF
             overlayCanvas.style.pointerEvents = 'auto';
             overlayCanvas.style.cursor = 'crosshair';
             
@@ -1055,55 +1062,66 @@ const viewAttachFile = async (event, pdfUrl, envioIdFromCard) => {
           };
         };
         
-        // Click handler for signature placement
-        overlayCanvas.addEventListener('click', function placeSignature(e) {
-          if (!pendingSignature || currentTool !== 'sign') return;
-          
-          overlayCanvas.style.pointerEvents = 'none';
-          
-          const rect = overlayCanvas.getBoundingClientRect();
-          const scaleX = overlayCanvas.width / rect.width;
-          const scaleY = overlayCanvas.height / rect.height;
-          const x = (e.clientX - rect.left) * scaleX;
-          const y = (e.clientY - rect.top) * scaleY;
-          
-          const sigImg = new Image();
-          sigImg.onload = function() {
-            const sigWidth = 150 * scale;
-            const sigHeight = Math.round((sigImg.height / sigImg.width) * sigWidth);
-            const sigCanvas = document.createElement('canvas');
-            sigCanvas.width = sigWidth;
-            sigCanvas.height = sigHeight;
-            const sigCtx = sigCanvas.getContext('2d');
-            sigCtx.drawImage(sigImg, 0, 0, sigWidth, sigHeight);
+          // Click handler for signature placement - use the exact canvas element
+          overlayCanvas.addEventListener('click', function placeSignature(e) {
+            if (!pendingSignature || currentTool !== 'sign') return;
             
-            annotations[pageNum] = {
-              dataURL: overlayCanvas.toDataURL(),
-              width: overlayCanvas.width,
-              height: overlayCanvas.height,
-              scale: scale
+            const rect = overlayCanvas.getBoundingClientRect();
+            const scaleX = overlayCanvas.width / rect.width;
+            const scaleY = overlayCanvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            const sigImg = new Image();
+            sigImg.onload = function() {
+              // Resolución fija alta para la firma (independiente del zoom)
+              const sigPdfWidth = 200; // ancho en unidades PDF
+              const sigPdfHeight = Math.round((sigImg.height / sigImg.width) * sigPdfWidth);
+              const sigCanvas = document.createElement('canvas');
+              sigCanvas.width = sigPdfWidth;
+              sigCanvas.height = sigPdfHeight;
+              const sigCtx = sigCanvas.getContext('2d');
+              sigCtx.drawImage(sigImg, 0, 0, sigPdfWidth, sigPdfHeight);
+              const sigHighResDataURL = sigCanvas.toDataURL('image/png');
+
+              // Tamaño de visualización en el canvas (proporcional al zoom)
+              const sigWidth = sigPdfWidth * scale;
+              const sigHeight = sigPdfHeight * scale;
+
+              annotations[pageNum] = {
+                dataURL: overlayCanvas.toDataURL(),
+                width: overlayCanvas.width,
+                height: overlayCanvas.height,
+                scale: scale
+              };
+
+              const sigX = x - sigWidth / 2;
+              const sigY = y - sigHeight / 2;
+
+              // Dibujar en el overlay a tamaño visible
+              const displayImg = new Image();
+              displayImg.onload = () => {
+                overlayCtx.drawImage(displayImg, sigX, sigY, sigWidth, sigHeight);
+              };
+              displayImg.src = sigHighResDataURL;
+
+              // Guardar la firma en alta resolución y coordenadas del canvas
+              annotations[pageNum].signatureDataURL = sigHighResDataURL;
+              annotations[pageNum].signatureX = sigX;
+              annotations[pageNum].signatureY = sigY;
+              annotations[pageNum].signatureWidth = sigWidth;
+              annotations[pageNum].signatureHeight = sigHeight;
+              
+              pendingSignature = null;
+              
+              const signBtn = document.getElementById('tool_sign');
+              if (signBtn) { signBtn.classList.remove('btn-primary'); signBtn.classList.add('btn-outline-primary'); }
+              
+              setActiveTool('pen');
+              saveCurrentAnnotation();
             };
-            
-            const sigX = x - sigWidth / 2;
-            const sigY = y - sigHeight / 2;
-            overlayCtx.drawImage(sigCanvas, sigX, sigY);
-            
-            annotations[pageNum].signatureDataURL = sigCanvas.toDataURL('image/png');
-            annotations[pageNum].signatureX = sigX;
-            annotations[pageNum].signatureY = sigY;
-            annotations[pageNum].signatureWidth = sigWidth;
-            annotations[pageNum].signatureHeight = sigHeight;
-            
-            pendingSignature = null;
-            
-            const signBtn = document.getElementById('tool_sign');
-            if (signBtn) { signBtn.classList.remove('btn-primary'); signBtn.classList.add('btn-outline-primary'); }
-            
-            setActiveTool('pen');
-            saveCurrentAnnotation();
-          };
-          sigImg.src = pendingSignature;
-        });
+            sigImg.src = pendingSignature;
+          });
         
         document.getElementById("tool_pen").addEventListener("click", () => setActiveTool('pen'));
         document.getElementById("tool_highlight").addEventListener("click", () => setActiveTool('highlight'));

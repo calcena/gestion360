@@ -121,6 +121,38 @@ if (isset($_POST['envio_id']) && is_numeric($_POST['envio_id'])) {
         $db = conectar();
         $envioId = intval($_POST['envio_id']);
         
+        // Guardar archivo original como primera versión si es la primera edición
+        if ($versionTimestamp) {
+            $checkVersions = $db->prepare("SELECT COUNT(*) as cnt FROM adjunto WHERE envio_id = ? AND version_timestamp IS NOT NULL AND version_timestamp > 0");
+            $checkVersions->execute([$envioId]);
+            $versionCount = $checkVersions->fetch(PDO::FETCH_ASSOC)['cnt'];
+
+            if ($versionCount == 0) {
+                // Buscar el archivo actual (sin timestamp) para guardarlo como primera versión
+                $currentStmt = $db->prepare("SELECT archivo FROM adjunto WHERE envio_id = ? ORDER BY registro DESC LIMIT 1");
+                $currentStmt->execute([$envioId]);
+                $currentRow = $currentStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($currentRow) {
+                    $currentFile = $uploadDir . $currentRow['archivo'];
+                    if (file_exists($currentFile) && !preg_match('/\.\d+\.pdf$/i', $currentRow['archivo'])) {
+                        // Extraer uuid base del archivo actual
+                        $origBaseName = preg_replace('/\.pdf$/i', '', $currentRow['archivo']);
+                        // Timestamp del archivo original basado en su fecha de modificación
+                        $origTimestamp = round(filemtime($currentFile) * 1000);
+                        $origVersionName = $origBaseName . '.' . $origTimestamp . '.pdf';
+                        $origVersionPath = $uploadDir . $origVersionName;
+
+                        if (copy($currentFile, $origVersionPath)) {
+                            $insOrig = $db->prepare("INSERT INTO adjunto (registro, envio_id, archivo, uuid_original, version_timestamp) VALUES (?, ?, ?, ?, ?)");
+                            $insOrig->execute([date('Y-m-d H:i:s'), $envioId, $origVersionName, $origBaseName, $origTimestamp]);
+                            file_put_contents($logFile, "Original saved as first version: {$origVersionName}, ts={$origTimestamp}\n", FILE_APPEND);
+                        }
+                    }
+                }
+            }
+        }
+        
         $stmt = $db->prepare("SELECT id, archivo FROM adjunto WHERE envio_id = ? ORDER BY registro DESC LIMIT 1");
         $stmt->execute([$envioId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
